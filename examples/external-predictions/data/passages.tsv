@@ -1,0 +1,21 @@
+id	src	tgt	source	reference	domain	doc
+synthetic/p01/en-ja	en	ja	"The town council met on Tuesday evening.
+Members voted to extend the bus line to the new school.
+The first buses will run in April."	"町議会は火曜日の夜に開かれました。
+議員たちは新しい学校までバス路線を延長することを可決しました。
+最初のバスは4月に運行を始めます。"	synthetic	synthetic/p01
+synthetic/p02/en-ja	en	ja	"Our garden club planted forty trees along the river.
+Each tree has a small sign with its name.
+Visitors can join a guided walk every Saturday."	"私たちのガーデンクラブは川沿いに40本の木を植えました。
+それぞれの木には名前を書いた小さな札が付いています。
+毎週土曜日には、ガイド付きの散策に参加できます。"	synthetic	synthetic/p02
+synthetic/p01/en-de	en	de	"The town council met on Tuesday evening.
+Members voted to extend the bus line to the new school.
+The first buses will run in April."	"Der Gemeinderat tagte am Dienstagabend.
+Die Mitglieder stimmten dafür, die Buslinie bis zur neuen Schule zu verlängern.
+Die ersten Busse fahren im April."	synthetic	synthetic/p01
+synthetic/p02/en-de	en	de	"Our garden club planted forty trees along the river.
+Each tree has a small sign with its name.
+Visitors can join a guided walk every Saturday."	"Unser Gartenverein hat vierzig Bäume am Fluss gepflanzt.
+Jeder Baum hat ein kleines Schild mit seinem Namen.
+Besucher können sich jeden Samstag einer Führung anschließen."	synthetic	synthetic/p02

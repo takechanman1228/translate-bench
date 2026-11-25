@@ -1,0 +1,14 @@
+{
+ "schema": "translate-bench/inputs@1",
+ "description": "The two assembled input files, as `translate-bench prepare` writes them: UTF-8, tab-separated, CSV quoting, CRLF line ends, header id, src, tgt, source, reference, domain, doc, rows in the order of datasets/items.jsonl.",
+ "files": {
+  "sentences.tsv": {
+   "sha256": "01660f622daf186511ccbad885572952e4eca3ee2c9062a2c284783773f940a1",
+   "rows": 3600
+  },
+  "passages.tsv": {
+   "sha256": "0cd694b8ea9c4042bbc0cda691717dea12cc8625f4effb5255a6de375d450c97",
+   "rows": 360
+  }
+ }
+}

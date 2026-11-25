@@ -1,0 +1,16 @@
+# Test texts, references, outputs and downloads never belong in the repository.
+private/
+.cache/
+.env
+.env.*
+*.gguf
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.ruff_cache/
+.pytest_cache/
+.DS_Store

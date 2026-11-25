@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use Translate Bench or its results, please cite the version you used."
+type: software
+title: "Translate Bench"
+abstract: >-
+  A reproducible benchmark for translation quality, speed and memory across local models and cloud services:
+  40 systems in 18 directions between English and nine languages, scored with COMET-22, chrF++ and MetricX-24,
+  with item-level scores and the code that recomputes the scores, rankings and intervals from them (speed,
+  memory and cost are published measurements, checked for schema and range).
+authors:
+  - alias: takechanman1228
+version: 1.0.0
+date-released: 2026-11-25
+repository-code: "https://github.com/takechanman1228/translate-bench"
+url: "https://github.com/takechanman1228/translate-bench"
+license: Apache-2.0
+keywords:
+  - machine translation
+  - benchmark
+  - evaluation
+  - local models

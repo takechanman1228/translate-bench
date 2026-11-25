@@ -1,0 +1,5663 @@
+{
+ "schema": "translate-bench/systems@1",
+ "release": "v1",
+ "machine": {
+  "description": "Apple M6, 32 GiB unified memory, macOS 27.0",
+  "note": "every local system ran on this one machine"
+ },
+ "prompt_profiles": {
+  "plamo": {
+   "endpoint": "/v1/chat/completions",
+   "description": "Source text alone as the user message; the GGUF's embedded chat template receives the lower-case source and target language codes as template arguments.",
+   "message": "{text}",
+   "template_arguments": {
+    "source_lang": "{source_code}",
+    "target_lang": "{target_code}"
+   },
+   "stop": [
+    "<|plamo:tag|>",
+    "<|plamo:bos|>"
+   ]
+  },
+  "generic-instruction": {
+   "endpoint": "/v1/chat/completions",
+   "description": "English instruction naming both languages, then the source; the embedded chat template formats it.",
+   "message": "Translate from {source} into {target}. Return only the translation.\n\n{text}"
+  },
+  "index-translate": {
+   "endpoint": "/v1/chat/completions",
+   "description": "Chinese instruction naming both languages in Chinese.",
+   "message": "请将以下{source_zh}文本翻译为{target_zh}，直接输出翻译结果，不要进行任何解释。\n\n{text}",
+   "language_names_zh": {
+    "en": "英语",
+    "es": "西班牙语",
+    "zh-Hans": "简体中文",
+    "ja": "日语",
+    "pt-BR": "巴西葡萄牙语",
+    "fr": "法语",
+    "de": "德语",
+    "id": "印度尼西亚语",
+    "ar": "阿拉伯语",
+    "ko": "韩语"
+   }
+  },
+  "hy-mt": {
+   "endpoint": "/v1/chat/completions",
+   "description": "Chinese instruction when either language is Simplified Chinese, otherwise English.",
+   "message_chinese": "将以下文本翻译为{target_zh}，注意只需要输出翻译后的结果，不要额外解释：\n\n{text}",
+   "message": "Translate the following text into {target}. Note that you should only output the translated result without any additional explanation:\n\n{text}"
+  },
+  "translategemma": {
+   "endpoint": "/v1/completions",
+   "description": "The published TranslateGemma text format rendered as a raw prompt; the server prepends the GGUF's BOS token. Chinese is named 'Chinese' with code zh-Hans.",
+   "prompt": "<start_of_turn>user\nYou are a professional {source} ({source_code}) to {target} ({target_code}) translator. Your goal is to accurately convey the meaning and nuances of the original {source} text while adhering to {target} grammar, vocabulary, and cultural sensitivities.\nProduce only the {target} translation, without any additional explanations or commentary. Please translate the following {source} text into {target}:\n\n\n{text_stripped}<end_of_turn>\n<start_of_turn>model\n",
+   "stop": [
+    "<end_of_turn>"
+   ]
+  },
+  "seed-x": {
+   "endpoint": "/v1/completions",
+   "description": "Seed-X prompt with the target tag, sent as token IDs from the base model's tokenizer.json (the GGUF's embedded tokenizer gives a different sequence). Chinese is named 'Chinese' with tag zh; Brazilian Portuguese uses tag pt.",
+   "prompt": "Translate the following {source} sentence into {target}:\n{text} <{target_tag}>",
+   "tokenizer_sha256": "35e68fc21e58581cff0ff98d9ca54fccbd8d0f0dd72c05a5bca8510eaf072ee1"
+  },
+  "qwen-mt-lumen": {
+   "description": "Qwen-MT-Lumen's minimal prompt with an empty guidelines block, through the model's chat template in MLX.",
+   "message": "Please translate the following text into {target}.\n#guidelines\n#src_text\n{text}"
+  },
+  "apple-foundation-models": {
+   "description": "The generic instruction sent to a fresh LanguageModelSession for each item, with no session instructions, through a Swift helper that stays loaded across items.",
+   "message": "Translate from {source} into {target}. Return only the translation.\n\n{text}"
+  },
+  "apple-translation": {
+   "description": "The plain source, line breaks included, to TranslationSession(installedSource:target:preferredStrategy:) with explicit languages and the highFidelity strategy; one session per direction."
+  },
+  "cloud-batch-json": {
+   "description": "One request carries up to 25 sentences or up to 5 passages of one direction as a JSON object; the model returns one JSON object with every key. {language} is the target language name.",
+   "message": "Translate each item independently into {language}. Preserve the source's meaning, facts, names, quantities, register, and paragraph breaks. Use only the supplied text. Do not use tools, files, web search, or citations. Return one JSON object mapping every supplied key to its translation string in the same order. Use JSON escapes for line breaks inside strings. Return only the object.\n\n{json_payload}",
+   "payload": "json.dumps({'T01': source, 'T02': source, ...}, ensure_ascii=False, indent=2), in frozen input order"
+  },
+  "deepl-text": {
+   "description": "Source strings only, as a text array, with explicit source and target languages. English output is EN-US, Portuguese PT-BR, Chinese ZH-HANS and Arabic AR."
+  }
+ },
+ "systems": [
+  {
+   "id": "hy-mt2-1.8b",
+   "name": "Hy-MT2 1.8B",
+   "developer": "Tencent",
+   "kind": "local",
+   "family": "Hy-MT2",
+   "size_label": "1.8B",
+   "parameters": 2038515712,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "tencent/Hy-MT2-1.8B",
+    "base_revision": "9a341cd1b679d3efd23b46e847b01745a71ed792",
+    "repository": "tencent/Hy-MT2-1.8B-GGUF",
+    "revision": "a0c709d9fac510f2c807aa3af52872340dc37a4a",
+    "file": "Hy-MT2-1.8B-Q4_K_M.gguf",
+    "sha256": "dc5f44fcf1fa496ee7ad725982c0c8c553a4de00259b53af84c4b89fb0c06699",
+    "size_bytes": 1133080448,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "hy-mt",
+   "generation": {
+    "temperature": 0.7,
+    "top_p": 0.6,
+    "top_k": 20,
+    "repeat_penalty": 1.05,
+    "min_p": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": "every attempt ran in serial mode"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "hy-mt2-7b",
+   "name": "Hy-MT2 7B",
+   "developer": "Tencent",
+   "kind": "local",
+   "family": "Hy-MT2",
+   "size_label": "7B",
+   "parameters": 8029540352,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "tencent/Hy-MT2-7B",
+    "base_revision": null,
+    "repository": "tencent/Hy-MT2-7B-GGUF",
+    "revision": "ab8472660ac61fac25f1af43fac2599d52a8a775",
+    "file": "Hy-MT2-7B-Q4_K_M.gguf",
+    "sha256": "9f96256500f3fc1ab4d64336b58f52a949a95ad7516b0c229476eef782f9f77b",
+    "size_bytes": 4624648896,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "hy-mt",
+   "generation": {
+    "temperature": 0.7,
+    "top_p": 0.6,
+    "top_k": 20,
+    "repeat_penalty": 1.05,
+    "min_p": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "hy-mt2-30b-a3b",
+   "name": "Hy-MT2 30B-A3B",
+   "developer": "Tencent",
+   "kind": "local",
+   "family": "Hy-MT2",
+   "size_label": "30B-A3B",
+   "parameters": 30064725888,
+   "mixture_of_experts": true,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "tencent/Hy-MT2-30B-A3B",
+    "base_revision": "d3ead4dba61c09aac60a261a96ad1df3e705febb",
+    "repository": "tencent/Hy-MT2-30B-A3B-GGUF",
+    "revision": "fd3dcbb6b31e9e03923ef4f9f42500f74c3851c3",
+    "file": "Hy-MT2-30B-A3B-Q4_K_M.gguf",
+    "sha256": "bb44b11bb0f7cd3d1321645b41e911cd3de2e473731227fc6bf37aa18b543f88",
+    "size_bytes": 18236702880,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 60,
+    "note": "the 60-second request deadline of the pilot was kept"
+   },
+   "prompt_profile": "hy-mt",
+   "generation": {
+    "temperature": 0.7,
+    "top_p": 1.0,
+    "top_k": -1,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "plamo-3-translate-0.8b",
+   "name": "PLaMo 3 Translate 0.8B",
+   "developer": "Preferred Networks",
+   "kind": "local",
+   "family": "PLaMo 3 Translate",
+   "size_label": "0.8B",
+   "parameters": 890344960,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "pfnet/plamo-3-translate-0.8b",
+    "base_revision": "c5a33c561bc6a4fbac38c3460bbb384e15c0b231",
+    "repository": "pfnet/plamo-3-translate-0.8b-GGUF",
+    "revision": "7de4409f84a9d70e3a5e87b81e84883d49f77b58",
+    "file": "plamo-3-translate-0.8b-Q4_K_M.gguf",
+    "sha256": "70891ec70dc7ab4205745a38307867c2881b99239f20327927633abfe4bc9ec6",
+    "size_bytes": 573126848,
+    "quantization": "Q4_K_M",
+    "license": null
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "plamo",
+   "generation": {
+    "temperature": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [
+    "pt-BR"
+   ],
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-24",
+     "end": "2026-11-24",
+     "added_after_first_publication": true
+    }
+   }
+  },
+  {
+   "id": "plamo-3-translate-2b",
+   "name": "PLaMo 3 Translate 2B",
+   "developer": "Preferred Networks",
+   "kind": "local",
+   "family": "PLaMo 3 Translate",
+   "size_label": "2B",
+   "parameters": 2878595584,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "pfnet/plamo-3-translate-2b",
+    "base_revision": null,
+    "repository": "pfnet/plamo-3-translate-2b-GGUF",
+    "revision": "228a27cc0bb4f111219963848d50a3127c16ca73",
+    "file": "plamo-3-translate-2b-Q4_K_M.gguf",
+    "sha256": "1ffd9073afcc70e35ccc942428aa2b73d7aa2b9ea779bf504b775369e0276c13",
+    "size_bytes": 1807203040,
+    "quantization": "Q4_K_M",
+    "license": "PLaMo Community License"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "plamo",
+   "generation": {
+    "temperature": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": "every attempt ran in serial mode"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [
+    "pt-BR"
+   ],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "plamo-3-translate-8b",
+   "name": "PLaMo 3 Translate 8B",
+   "developer": "Preferred Networks",
+   "kind": "local",
+   "family": "PLaMo 3 Translate",
+   "size_label": "8B",
+   "parameters": 8531750912,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "pfnet/plamo-3-translate-8b",
+    "base_revision": null,
+    "repository": "pfnet/plamo-3-translate-8b-GGUF",
+    "revision": "fccc6b15efc7d615189fa5df6a1a02ecd2dbc18f",
+    "file": "plamo-3-translate-8b-Q4_K_M.gguf",
+    "sha256": "94e5d3f91b421f7c8900ddaac27b11a19f7441426c954bbb25a2fd60a1640187",
+    "size_bytes": 5280445728,
+    "quantization": "Q4_K_M",
+    "license": "PLaMo Community License"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "plamo",
+   "generation": {
+    "temperature": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": "every attempt ran in serial mode"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [
+    "pt-BR"
+   ],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "plamo-3-translate-31b",
+   "name": "PLaMo 3 Translate 31B",
+   "developer": "Preferred Networks",
+   "kind": "local",
+   "family": "PLaMo 3 Translate",
+   "size_label": "31B",
+   "parameters": 31757456384,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "pfnet/plamo-3-translate-31b",
+    "base_revision": "0134b62c7e70aecec42ea81b6cecf7807b15d034",
+    "repository": "pfnet/plamo-3-translate-31b-GGUF",
+    "revision": "7d170d025221a9301f2eec5e38cb3d2361814339",
+    "file": "plamo-3-translate-31b-Q4_K_M.gguf",
+    "sha256": "47788c3eb71b830919a8454022381de943a43edfab65dad9e742997028d1f9df",
+    "size_bytes": 19526593952,
+    "quantization": "Q4_K_M",
+    "license": null
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "plamo",
+   "generation": {
+    "temperature": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 3,
+    "note": "chosen by a throughput test at two, three and four requests before the run"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [
+    "pt-BR"
+   ],
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-24",
+     "end": "2026-11-24",
+     "added_after_first_publication": true
+    }
+   }
+  },
+  {
+   "id": "index-translate-2b",
+   "name": "Index-Translate 2B",
+   "developer": "Bilibili",
+   "kind": "local",
+   "family": "Index-Translate",
+   "size_label": "2B",
+   "parameters": 2274069824,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "IndexTeam/Index-Translate-2B",
+    "base_revision": "9bc08445315723eb9b77d1b93505915eb03c3f01",
+    "repository": "IndexTeam/Index-Translate-2B-GGUF",
+    "revision": "3a0eca6ce931d88d00614d427ab3ed8ff0743902",
+    "file": "Index-Translate-2B.Q4_K_M.gguf",
+    "sha256": "044b313d29342bd3b2c77cbb64023ca0d209bd9b3247763f9d162767ef2d746a",
+    "size_bytes": 1312164352,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "index-translate",
+   "generation": {
+    "temperature": 0,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": "every attempt ran in serial mode"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "index-translate-9b",
+   "name": "Index-Translate 9B",
+   "developer": "Bilibili",
+   "kind": "local",
+   "family": "Index-Translate",
+   "size_label": "9B",
+   "parameters": 9653104368,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "IndexTeam/Index-Translate-9B",
+    "base_revision": null,
+    "repository": "IndexTeam/Index-Translate-9B-GGUF",
+    "revision": "645939fbab839a656f1bc39975a872bc8ad749f8",
+    "file": "Index-Translate-9B.Q4_K_M.gguf",
+    "sha256": "9cc6758b0007f4cbf42ea3400768cbff91ae74ef8d640e467158348426d33713",
+    "size_bytes": 5780090304,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "index-translate",
+   "generation": {
+    "temperature": 0,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "index-translate-35b-a3b-preview",
+   "name": "Index-Translate 35B-A3B preview",
+   "developer": "Bilibili",
+   "kind": "local",
+   "family": "Index-Translate",
+   "size_label": "35B-A3B preview",
+   "parameters": 35951822704,
+   "mixture_of_experts": true,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "IndexTeam/Index-Translate-35B-A3B-preview",
+    "base_revision": "7e4029e0df842502cb009cf493d6467c247043b3",
+    "repository": "IndexTeam/Index-Translate-35B-A3B-preview-GGUF",
+    "revision": "3319ce338363a181c6c20c06b7379063d9baf484",
+    "file": "Index-Translate-35B-A3B-preview.Q4_K_M.gguf",
+    "sha256": "7d803928b68110b64880206f79ccd18e209d11091a21c689ca9e369687cb93f6",
+    "size_bytes": 21713462400,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "index-translate",
+   "generation": {
+    "temperature": 0,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 2,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-24",
+     "end": "2026-11-24",
+     "added_after_first_publication": true
+    }
+   }
+  },
+  {
+   "id": "translategemma-4b",
+   "name": "TranslateGemma 4B",
+   "developer": "Google",
+   "kind": "local",
+   "family": "TranslateGemma",
+   "size_label": "4B",
+   "parameters": 4300079472,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "google/translategemma-4b-it",
+    "base_revision": "10042cb0e6e7fdce748996a71dc3dc432a4e0c89",
+    "repository": "Menterium/translategemma-4b-it-GGUF",
+    "revision": "d1709f49e90452b9189e0144cc6826d199616921",
+    "file": "translategemma-4b-it-Q4_K_M.gguf",
+    "sha256": "e7d9523174272fca61264b339f06d10c6115426267bb0f752b0124084e487b8e",
+    "size_bytes": 2489909312,
+    "quantization": "Q4_K_M",
+    "license": "Gemma Terms"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "translategemma",
+   "generation": {
+    "temperature": 0,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "translategemma-12b",
+   "name": "TranslateGemma 12B",
+   "developer": "Google",
+   "kind": "local",
+   "family": "TranslateGemma",
+   "size_label": "12B",
+   "parameters": 12187325040,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "google/translategemma-12b-it",
+    "base_revision": null,
+    "repository": "Menterium/translategemma-12b-it-GGUF",
+    "revision": "3581fb4d72ccfab0a0c71e7708e82e14496a62dc",
+    "file": "translategemma-12b-it-Q4_K_M.gguf",
+    "sha256": "a855e476cec53780a861c34a870b59abf0b8656133448eec868d78ffdc11d7c2",
+    "size_bytes": 7300793600,
+    "quantization": "Q4_K_M",
+    "license": "Gemma Terms"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "translategemma",
+   "generation": {
+    "temperature": 0,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "translategemma-27b",
+   "name": "TranslateGemma 27B",
+   "developer": "Google",
+   "kind": "local",
+   "family": "TranslateGemma",
+   "size_label": "27B",
+   "parameters": 27432406640,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "google/translategemma-27b-it",
+    "base_revision": "7d10f0b72f89a2d0f268cea30727d8b77c0d25c2",
+    "repository": "mradermacher/translategemma-27b-it-GGUF",
+    "revision": "22fb50537007ccd41c41a0f0f0482e0fdb3335ab",
+    "file": "translategemma-27b-it.Q4_K_M.gguf",
+    "sha256": "7f1e67c4ecfec676b38c1ea2ef85c46fafe2f02d3c050fb9540e51787405d8a3",
+    "size_bytes": 16546704480,
+    "quantization": "Q4_K_M",
+    "license": "Gemma Terms"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "translategemma",
+   "generation": {
+    "temperature": 0,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": "chosen by a throughput test at two, three and four requests before the run"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-24",
+     "end": "2026-11-24",
+     "added_after_first_publication": true
+    }
+   }
+  },
+  {
+   "id": "gemma-4-e2b-it",
+   "name": "Gemma 4 E2B IT",
+   "developer": "Google",
+   "kind": "local",
+   "family": "Gemma 4",
+   "size_label": "E2B IT",
+   "parameters": 5123178051,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "google/gemma-4-E2B-it",
+    "base_revision": "4adf15748de9e1a0097b6274cee9c15836c41c37",
+    "repository": "ggml-org/gemma-4-E2B-it-GGUF",
+    "revision": "2a8538c2e2d4687953a86c422c7c623cfd022880",
+    "file": "gemma-4-E2B-it-Q4_0.gguf",
+    "sha256": "8e30dff3ac4c8434c49a7036fa15564bdbb6044e42bf04550bf1a096ad7e6a52",
+    "size_bytes": 2841481184,
+    "quantization": "Q4_0",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "generic-instruction",
+   "generation": {
+    "temperature": 1.0,
+    "top_k": 64,
+    "top_p": 0.95,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": "every attempt ran in serial mode"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gemma-4-e4b-it",
+   "name": "Gemma 4 E4B IT",
+   "developer": "Google",
+   "kind": "local",
+   "family": "Gemma 4",
+   "size_label": "E4B IT",
+   "parameters": 7996156490,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "google/gemma-4-E4B-it",
+    "base_revision": null,
+    "repository": "ggml-org/gemma-4-E4B-it-GGUF",
+    "revision": "8903cb408c7df39cde2ed15fac397e6d7be92951",
+    "file": "gemma-4-E4B-it-Q4_0.gguf",
+    "sha256": "a555b900214b477d8880e7832e0b8925e139b0159640036b09fe472b6f2097f2",
+    "size_bytes": 4590807392,
+    "quantization": "Q4_0",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "generic-instruction",
+   "generation": {
+    "temperature": 1.0,
+    "top_k": 64,
+    "top_p": 0.95,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gemma-4-12b-it",
+   "name": "Gemma 4 12B IT",
+   "developer": "Google",
+   "kind": "local",
+   "family": "Gemma 4",
+   "size_label": "12B IT",
+   "parameters": 11959730224,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "google/gemma-4-12B-it",
+    "base_revision": "43c9d014b231474fa7212dbb48a762566c2b255d",
+    "repository": "ggml-org/gemma-4-12B-it-GGUF",
+    "revision": "501d13dba70e3c02b1b12c78fd9e6b08ad413960",
+    "file": "gemma-4-12B-it-Q4_0.gguf",
+    "sha256": "3712b9bd32cae83a22f67ee7a4466d8d7a4f21646ac8a07d19bf9418e8767a70",
+    "size_bytes": 7219673216,
+    "quantization": "Q4_0",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "generic-instruction",
+   "generation": {
+    "temperature": 1.0,
+    "top_k": 64,
+    "top_p": 0.95,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gemma-4-31b-it",
+   "name": "Gemma 4 31B IT",
+   "developer": "Google",
+   "kind": "local",
+   "family": "Gemma 4",
+   "size_label": "31B IT",
+   "parameters": 31273088876,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "google/gemma-4-31B-it",
+    "base_revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+    "repository": "ggml-org/gemma-4-31B-it-GGUF",
+    "revision": "f39d380138390ea246513ff0f087352f3cfc3a1b",
+    "file": "gemma-4-31B-it-Q4_0.gguf",
+    "sha256": "031dc1c5fa9c5a0abbf3c39c5173fb2af65f5ac2dc2a090268561d3c72dcd834",
+    "size_bytes": 17992313088,
+    "quantization": "Q4_0",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "generic-instruction",
+   "generation": {
+    "temperature": 1.0,
+    "top_k": 64,
+    "top_p": 0.95,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 2,
+    "note": "two, one and briefly three concurrent requests while the memory ceiling was set; two from 2026-11-23 01:19 UTC (the final setting)"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "qwen3.5-2b",
+   "name": "Qwen3.5 2B",
+   "developer": "Alibaba",
+   "kind": "local",
+   "family": "Qwen3.5",
+   "size_label": "2B",
+   "parameters": 2274069824,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "Qwen/Qwen3.5-2B",
+    "base_revision": "15852e8c16360a2fea060d615a32b45270f8a8fc",
+    "repository": "unsloth/Qwen3.5-2B-GGUF",
+    "revision": "f6d5376be1edb4d416d56da11e5397a961aca8ae",
+    "file": "Qwen3.5-2B-Q4_K_M.gguf",
+    "sha256": "aaf42c8b7c3cab2bf3d69c355048d4a0ee9973d48f16c731c0520ee914699223",
+    "size_bytes": 1280835840,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "generic-instruction",
+   "generation": {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "presence_penalty": 1.5,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": "every attempt ran in serial mode"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "qwen3.5-4b",
+   "name": "Qwen3.5 4B",
+   "developer": "Alibaba",
+   "kind": "local",
+   "family": "Qwen3.5",
+   "size_label": "4B",
+   "parameters": 4659865088,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "Qwen/Qwen3.5-4B",
+    "base_revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+    "repository": "unsloth/Qwen3.5-4B-GGUF",
+    "revision": "e87f176479d0855a907a41277aca2f8ee7a09523",
+    "file": "Qwen3.5-4B-Q4_K_M.gguf",
+    "sha256": "00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4",
+    "size_bytes": 2740937888,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "generic-instruction",
+   "generation": {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "presence_penalty": 1.5,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "qwen3.5-9b",
+   "name": "Qwen3.5 9B",
+   "developer": "Alibaba",
+   "kind": "local",
+   "family": "Qwen3.5",
+   "size_label": "9B",
+   "parameters": 9653104368,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "Qwen/Qwen3.5-9B",
+    "base_revision": null,
+    "repository": "unsloth/Qwen3.5-9B-GGUF",
+    "revision": "3885219b6810b007914f3a7950a8d1b469d598a5",
+    "file": "Qwen3.5-9B-Q4_K_M.gguf",
+    "sha256": "03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8",
+    "size_bytes": 5680522464,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "generic-instruction",
+   "generation": {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "presence_penalty": 1.5,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "qwen3.5-27b",
+   "name": "Qwen3.5 27B",
+   "developer": "Alibaba",
+   "kind": "local",
+   "family": "Qwen3.5",
+   "size_label": "27B",
+   "parameters": 27781427952,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "Qwen/Qwen3.5-27B",
+    "base_revision": "81a287ca484a5e71148f5beb7f367bb5286d70f9",
+    "repository": "unsloth/Qwen3.5-27B-GGUF",
+    "revision": "3221f178a6b842d04f1fb42f1c413534adcc0a6a",
+    "file": "Qwen3.5-27B-Q4_K_M.gguf",
+    "sha256": "84b5f7f112156d63836a01a69dc3f11a6ba63b10a23b8ca7a7efaf52d5a2d806",
+    "size_bytes": 16740812704,
+    "quantization": "Q4_K_M",
+    "license": null
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "generic-instruction",
+   "generation": {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "presence_penalty": 1.5,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "enable_thinking": false,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": "off",
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": "chosen by a throughput test at two, three and four requests before the run"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-24",
+     "end": "2026-11-25",
+     "added_after_first_publication": true
+    }
+   }
+  },
+  {
+   "id": "seed-x-ppo-7b",
+   "name": "Seed-X-PPO 7B",
+   "developer": "ByteDance",
+   "kind": "local",
+   "family": "Seed-X-PPO",
+   "size_label": "7B",
+   "parameters": 7514271744,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "ByteDance-Seed/Seed-X-PPO-7B",
+    "base_revision": "6ef78fc034ec86c0036d7a7ca2bfc24607f48050",
+    "repository": "mradermacher/Seed-X-PPO-7B-GGUF",
+    "revision": "c9166f2c073d3219fe22e1f35910a41e666e971f",
+    "file": "Seed-X-PPO-7B.Q4_K_M.gguf",
+    "sha256": "9202183d5b52a1d80271cfdf20e4bf98fb7430c797a225581cd226ba7ba3cdb1",
+    "size_bytes": 4557582848,
+    "quantization": "Q4_K_M",
+    "license": "OpenMDW-1.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "seed-x",
+   "generation": {
+    "temperature": 0,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false,
+    "target_tags": {
+     "pt-BR": "pt",
+     "zh-Hans": "zh"
+    }
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 4,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "eurollm-22b-instruct-2512",
+   "name": "EuroLLM-Instruct-2512 22B",
+   "developer": "EuroLLM Team",
+   "kind": "local",
+   "family": "EuroLLM-Instruct-2512",
+   "size_label": "22B",
+   "parameters": 22637328384,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "GGUF",
+    "base_model": "utter-project/EuroLLM-22B-Instruct-2512",
+    "base_revision": "8c6ed5c8d18527d9daed994f645032b86c53f0bb",
+    "repository": "mradermacher/EuroLLM-22B-Instruct-2512-GGUF",
+    "revision": "4976cb0694d9e13592fffd61c2db500b0d0fced3",
+    "file": "EuroLLM-22B-Instruct-2512.Q4_K_M.gguf",
+    "sha256": "d2680ecbf23655a13d0de39d4eeaaedc94da9390fd482ecc95e36b155428d655",
+    "size_bytes": 13658576320,
+    "quantization": "Q4_K_M",
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "llama.cpp",
+    "backend": "Metal",
+    "version": "0.9.0-dev build 1",
+    "commit": "494d0f4",
+    "binary_sha256": "4bf89ca1069bc758b8bb256ff7b4de99d708f74194a0746d074830dc418eea27",
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512,
+    "endpoint": "llama-server",
+    "request_timeout_s": 120
+   },
+   "prompt_profile": "generic-instruction",
+   "generation": {
+    "temperature": 0,
+    "repeat_penalty": 1.0,
+    "min_p": 0,
+    "seed": 42,
+    "max_tokens": 512,
+    "cache_prompt": false
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 2,
+    "note": "one request at a time until 2026-11-22 22:16 UTC, then two; each session recorded its count"
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [
+    "id"
+   ],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-19",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "qwen-mt-lumen",
+   "name": "Qwen-MT-Lumen",
+   "developer": "Alibaba",
+   "kind": "local",
+   "family": "Qwen-MT-Lumen",
+   "size_label": null,
+   "parameters": 14770000000,
+   "mixture_of_experts": false,
+   "weights": {
+    "format": "MLX",
+    "base_model": "ATH-MaaS/Qwen-MT-Lumen",
+    "repository": "bac2qh/Qwen-MT-Lumen-MLX-4bit",
+    "revision": "0560c213a3c3f0532e06a7be86637c2d0526068a",
+    "quantization": "MLX 4-bit",
+    "files": {
+     "model-00001-of-00002.safetensors": "c6722f73f9e2b460b8be7045565bba1486add7fbdba056f25a17a8678752fd84",
+     "model-00002-of-00002.safetensors": "9a4f0526f372441162051d6b9456370c368571542dd45728d0222dc99ee5e58b",
+     "tokenizer.json": "be75606093db2094d7cd20f3c2f385c212750648bd6ea4fb2bf507a6a4c55506"
+    },
+    "sha256": null,
+    "file": null,
+    "size_bytes": null,
+    "license": "Apache-2.0"
+   },
+   "runtime": {
+    "name": "MLX",
+    "packages": {
+     "mlx": "0.32.4",
+     "mlx-lm": "0.32.2",
+     "transformers": "5.23.0"
+    },
+    "context_tokens_per_request": 4096,
+    "max_output_tokens": 512
+   },
+   "prompt_profile": "qwen-mt-lumen",
+   "generation": {
+    "sampling": "greedy",
+    "seed": 42,
+    "max_tokens": 512,
+    "timeout_s": 120
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "en-zh-Hans",
+     "en-ko",
+     "en-de",
+     "en-id"
+    ],
+    "passage": [
+     "en-ja",
+     "en-zh-Hans",
+     "en-ko",
+     "en-de",
+     "en-ar",
+     "en-id"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "en-zh-Hans",
+     "en-ko",
+     "en-de",
+     "en-id"
+    ],
+    "passage": [
+     "en-ja",
+     "en-zh-Hans",
+     "en-ko",
+     "en-de",
+     "en-ar",
+     "en-id"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": null,
+   "support_note": "English to Korean, German, Indonesian, Japanese and Simplified Chinese, and English to Arabic on passages only (the Egyptian locale of WMT24++); every other direction is unsupported.",
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "apple-foundation-models",
+   "name": "Apple Intelligence on-device model (Foundation Models)",
+   "developer": "Apple",
+   "kind": "local",
+   "family": "Apple",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": {
+    "name": "Apple FoundationModels framework",
+    "os": "macOS 27.0",
+    "helper": "a Swift program that calls the system framework and stays loaded across items",
+    "on_device": true
+   },
+   "prompt_profile": "apple-foundation-models",
+   "generation": {
+    "sampling": "greedy",
+    "maximum_response_tokens": 512,
+    "guardrails": "default",
+    "timeout_s": 120
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [
+    "ar",
+    "id"
+   ],
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "apple-foundation-models-permissive",
+   "name": "Apple Intelligence on-device model (Foundation Models, permissive guardrails)",
+   "developer": "Apple",
+   "kind": "local",
+   "family": "Apple",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": {
+    "name": "Apple FoundationModels framework",
+    "os": "macOS 27.0",
+    "helper": "a Swift program that calls the system framework and stays loaded across items",
+    "on_device": true
+   },
+   "prompt_profile": "apple-foundation-models",
+   "generation": {
+    "sampling": "greedy",
+    "maximum_response_tokens": 512,
+    "guardrails": "permissive",
+    "timeout_s": 120
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [
+    "ar",
+    "id"
+   ],
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "apple-translation",
+   "name": "Apple Translation framework (on-device)",
+   "developer": "Apple",
+   "kind": "local",
+   "family": "Apple",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": {
+    "name": "Apple Translation framework",
+    "os": "macOS 27.0",
+    "helper": "a Swift program that calls the system framework and stays loaded across items",
+    "on_device": true
+   },
+   "prompt_profile": "apple-translation",
+   "generation": {
+    "strategy": "highFidelity"
+   },
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": 1,
+    "concurrent_requests": 1,
+    "note": null
+   },
+   "client": null,
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gpt-6.2-astra",
+   "name": "GPT-6.2 Astra",
+   "developer": "OpenAI",
+   "kind": "cloud",
+   "family": "OpenAI",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "gpt-6.2-astra",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Codex CLI",
+    "via": "subscription client",
+    "invocation": "codex --ask-for-approval never exec --ignore-user-config --ignore-rules --ephemeral --skip-git-repo-check --sandbox read-only --color never -c 'model_reasoning_effort=\"medium\"' --model \"$MODEL\" --json -",
+    "pilot": {
+     "version": "0.171.0"
+    },
+    "release": {
+     "version": "0.171.0",
+     "note": "the same client and version as in the pilot"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gpt-6.2-sol",
+   "name": "GPT-6.2 Sol",
+   "developer": "OpenAI",
+   "kind": "cloud",
+   "family": "OpenAI",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "gpt-6.2-sol",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Codex CLI",
+    "via": "subscription client",
+    "invocation": "codex --ask-for-approval never exec --ignore-user-config --ignore-rules --ephemeral --skip-git-repo-check --sandbox read-only --color never -c 'model_reasoning_effort=\"medium\"' --model \"$MODEL\" --json -",
+    "pilot": {
+     "version": "0.171.0"
+    },
+    "release": {
+     "version": "0.171.0",
+     "note": "the same client and version as in the pilot"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gpt-6.1-terra",
+   "name": "GPT-6.1 Terra",
+   "developer": "OpenAI",
+   "kind": "cloud",
+   "family": "OpenAI",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "gpt-6.1-terra",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Codex CLI",
+    "via": "subscription client",
+    "invocation": "codex --ask-for-approval never exec --ignore-user-config --ignore-rules --ephemeral --skip-git-repo-check --sandbox read-only --color never -c 'model_reasoning_effort=\"medium\"' --model \"$MODEL\" --json -",
+    "pilot": {
+     "version": "0.171.0"
+    },
+    "release": {
+     "version": "0.171.0",
+     "note": "the same client and version as in the pilot"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gpt-6-luna",
+   "name": "GPT-6 Luna",
+   "developer": "OpenAI",
+   "kind": "cloud",
+   "family": "OpenAI",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "gpt-6-luna",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Codex CLI",
+    "via": "subscription client",
+    "invocation": "codex --ask-for-approval never exec --ignore-user-config --ignore-rules --ephemeral --skip-git-repo-check --sandbox read-only --color never -c 'model_reasoning_effort=\"medium\"' --model \"$MODEL\" --json -",
+    "pilot": {
+     "version": "0.171.0"
+    },
+    "release": {
+     "version": "0.171.0",
+     "note": "the same client and version as in the pilot"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "claude-fable-5-2",
+   "name": "Claude Fable 5.2",
+   "developer": "Anthropic",
+   "kind": "cloud",
+   "family": "Anthropic",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "claude-fable-5-2",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Claude Code",
+    "via": "subscription client",
+    "invocation": "claude -p --setting-sources '' --strict-mcp-config --tools '' --no-session-persistence --effort medium --output-format json --model \"$MODEL\"",
+    "pilot": {
+     "version": "2.1.329"
+    },
+    "release": {
+     "version": "2.1.329",
+     "note": "the same client and version as in the pilot"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "claude-opus-5-5",
+   "name": "Claude Opus 5.5",
+   "developer": "Anthropic",
+   "kind": "cloud",
+   "family": "Anthropic",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "claude-opus-5-5",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Claude Code",
+    "via": "subscription client",
+    "invocation": "claude -p --setting-sources '' --strict-mcp-config --tools '' --no-session-persistence --effort medium --output-format json --model \"$MODEL\"",
+    "pilot": {
+     "version": "2.1.329"
+    },
+    "release": {
+     "version": "2.1.329",
+     "note": "the same client and version as in the pilot"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "claude-sonnet-5-5",
+   "name": "Claude Sonnet 5.5",
+   "developer": "Anthropic",
+   "kind": "cloud",
+   "family": "Anthropic",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "claude-sonnet-5-5",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Claude Code",
+    "via": "subscription client",
+    "invocation": "claude -p --setting-sources '' --strict-mcp-config --tools '' --no-session-persistence --effort medium --output-format json --model \"$MODEL\"",
+    "pilot": {
+     "version": "2.1.329"
+    },
+    "release": {
+     "version": "2.1.329",
+     "note": "the same client and version as in the pilot"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "claude-haiku-5-5",
+   "name": "Claude Haiku 5.5",
+   "developer": "Anthropic",
+   "kind": "cloud",
+   "family": "Anthropic",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "claude-haiku-5-5",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Claude Code",
+    "via": "subscription client",
+    "invocation": "claude -p --setting-sources '' --strict-mcp-config --tools '' --no-session-persistence --effort medium --output-format json --model \"$MODEL\"",
+    "pilot": {
+     "version": "2.1.329"
+    },
+    "release": {
+     "version": "2.1.329",
+     "note": "the same client and version as in the pilot"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gemini-4-argon",
+   "name": "Gemini 4 Argon",
+   "developer": "Google",
+   "kind": "cloud",
+   "family": "Google",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "gemini-4-argon-medium",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Antigravity CLI",
+    "via": "subscription client",
+    "invocation": "agy -p \"$PROMPT\" --sandbox --disable-slash-commands --output-format stream-json --model \"$MODEL\" --print-timeout \"${TIMEOUT}s\"",
+    "pilot": {
+     "version": "1.5.13"
+    },
+    "release": {
+     "version": null,
+     "note": "a different subscription than in the pilot; the client version of the release run is not recorded in the public record"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gemini-4-neon",
+   "name": "Gemini 4 Neon",
+   "developer": "Google",
+   "kind": "cloud",
+   "family": "Google",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "gemini-4-neon-medium",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Antigravity CLI",
+    "via": "subscription client",
+    "invocation": "agy -p \"$PROMPT\" --sandbox --disable-slash-commands --output-format stream-json --model \"$MODEL\" --print-timeout \"${TIMEOUT}s\"",
+    "pilot": {
+     "version": "1.5.13"
+    },
+    "release": {
+     "version": null,
+     "note": "a different subscription than in the pilot; the client version of the release run is not recorded in the public record"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gemini-4-hydrogen",
+   "name": "Gemini 4 Hydrogen",
+   "developer": "Google",
+   "kind": "cloud",
+   "family": "Google",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "gemini-4-hydrogen-medium",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Antigravity CLI",
+    "via": "subscription client",
+    "invocation": "agy -p \"$PROMPT\" --sandbox --disable-slash-commands --output-format stream-json --model \"$MODEL\" --print-timeout \"${TIMEOUT}s\"",
+    "pilot": {
+     "version": "1.5.13"
+    },
+    "release": {
+     "version": null,
+     "note": "a different subscription than in the pilot; the client version of the release run is not recorded in the public record"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "gemini-3.8-flash",
+   "name": "Gemini 3.8 Flash",
+   "developer": "Google",
+   "kind": "cloud",
+   "family": "Google",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "cloud-batch-json",
+   "generation": {
+    "client_model_id": "gemini-3.8-flash-medium",
+    "note": "service-side decoding settings are not exposed"
+   },
+   "reasoning": "medium",
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; an item failed when two attempts of its batch returned no translation; in the release, one request per client at a time, at least 120 s apart"
+   },
+   "client": {
+    "name": "Antigravity CLI",
+    "via": "subscription client",
+    "invocation": "agy -p \"$PROMPT\" --sandbox --disable-slash-commands --output-format stream-json --model \"$MODEL\" --print-timeout \"${TIMEOUT}s\"",
+    "pilot": null,
+    "release": {
+     "version": null,
+     "note": "a different subscription than in the pilot; the client version of the release run is not recorded in the public record"
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": []
+   },
+   "passage_sets_attempted": [
+    "set-12"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": null,
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  },
+  {
+   "id": "deepl-api",
+   "name": "DeepL API",
+   "developer": "DeepL",
+   "kind": "cloud",
+   "family": "DeepL",
+   "size_label": null,
+   "parameters": null,
+   "mixture_of_experts": null,
+   "weights": null,
+   "runtime": null,
+   "prompt_profile": "deepl-text",
+   "generation": null,
+   "reasoning": null,
+   "request_mode": {
+    "items_per_request": {
+     "sentence": 25,
+     "passage": 5
+    },
+    "concurrent_requests": null,
+    "note": "frozen batches of up to 25 sentences or up to 5 passages of one direction, in the pilot and in the release; one request per batch, no retry"
+   },
+   "client": {
+    "name": "DeepL API",
+    "via": "translation API",
+    "invocation": null,
+    "pilot": {
+     "version": null
+    },
+    "release": {
+     "version": null
+    }
+   },
+   "directions_attempted": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "directions_complete": {
+    "sentence": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ],
+    "passage": [
+     "en-ja",
+     "ja-en",
+     "en-zh-Hans",
+     "zh-Hans-en",
+     "en-es",
+     "es-en",
+     "en-ko",
+     "ko-en",
+     "en-fr",
+     "fr-en",
+     "en-de",
+     "de-en",
+     "en-pt-BR",
+     "pt-BR-en",
+     "en-ar",
+     "ar-en",
+     "en-id",
+     "id-en"
+    ]
+   },
+   "passage_sets_attempted": [
+    "set-12",
+    "set-8"
+   ],
+   "unsupported_languages": [],
+   "measured": {
+    "pilot": {
+     "start": "2026-11-20",
+     "end": "2026-11-20"
+    },
+    "release": {
+     "start": "2026-11-21",
+     "end": "2026-11-23"
+    }
+   }
+  }
+ ]
+}

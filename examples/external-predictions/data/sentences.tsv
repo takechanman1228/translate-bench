@@ -1,0 +1,17 @@
+id	src	tgt	source	reference	domain	doc
+synthetic/s01/en-ja	en	ja	The new library opens at nine on weekdays.	新しい図書館は平日の9時に開館します。	synthetic	synthetic/s01
+synthetic/s02/en-ja	en	ja	Our team finished the bridge inspection two days early.	私たちのチームは橋の点検を2日早く終えました。	synthetic	synthetic/s02
+synthetic/s03/en-ja	en	ja	Please bring your own water bottle to the workshop.	ワークショップには各自で水筒を持ってきてください。	synthetic	synthetic/s03
+synthetic/s04/en-ja	en	ja	The museum will close its east wing for repairs next month.	博物館は来月、修理のため東館を閉鎖します。	synthetic	synthetic/s04
+synthetic/s05/en-ja	en	ja	Rain is expected in the afternoon, so the match may start late.	午後は雨の予報なので、試合の開始が遅れるかもしれません。	synthetic	synthetic/s05
+synthetic/s06/en-ja	en	ja	She painted the fence blue because her neighbor asked politely.	隣人に丁寧に頼まれたので、彼女はフェンスを青く塗りました。	synthetic	synthetic/s06
+synthetic/s07/en-ja	en	ja	The bakery on the corner sells out of bread by noon.	角のパン屋は昼までにパンが売り切れます。	synthetic	synthetic/s07
+synthetic/s08/en-ja	en	ja	Three volunteers counted the birds in the park on Sunday.	日曜日、3人のボランティアが公園の鳥を数えました。	synthetic	synthetic/s08
+synthetic/s01/en-de	en	de	The new library opens at nine on weekdays.	Die neue Bibliothek öffnet werktags um neun Uhr.	synthetic	synthetic/s01
+synthetic/s02/en-de	en	de	Our team finished the bridge inspection two days early.	Unser Team hat die Brückenprüfung zwei Tage früher abgeschlossen.	synthetic	synthetic/s02
+synthetic/s03/en-de	en	de	Please bring your own water bottle to the workshop.	Bitte bringen Sie Ihre eigene Wasserflasche zum Workshop mit.	synthetic	synthetic/s03
+synthetic/s04/en-de	en	de	The museum will close its east wing for repairs next month.	Das Museum schließt nächsten Monat seinen Ostflügel für Reparaturen.	synthetic	synthetic/s04
+synthetic/s05/en-de	en	de	Rain is expected in the afternoon, so the match may start late.	Am Nachmittag wird Regen erwartet, daher könnte das Spiel später beginnen.	synthetic	synthetic/s05
+synthetic/s06/en-de	en	de	She painted the fence blue because her neighbor asked politely.	Sie strich den Zaun blau, weil ihr Nachbar höflich darum gebeten hatte.	synthetic	synthetic/s06
+synthetic/s07/en-de	en	de	The bakery on the corner sells out of bread by noon.	Die Bäckerei an der Ecke ist bis Mittag mit Brot ausverkauft.	synthetic	synthetic/s07
+synthetic/s08/en-de	en	de	Three volunteers counted the birds in the park on Sunday.	Drei Freiwillige zählten am Sonntag die Vögel im Park.	synthetic	synthetic/s08

@@ -1,0 +1,207 @@
+{
+ "schema": "translate-bench/sources@1",
+ "description": "Every upstream file the inputs are built from, with the revision and SHA-256 that were verified. No text is distributed here.",
+ "files": {
+  "ntrex-128/DOCUMENT_IDS.tsv": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/DOCUMENT_IDS.tsv",
+   "sha256": "88a8b0ff1eae47e83f60dcde01075b8c87d75ced59ca09e0af1eb539958e05d5"
+  },
+  "ntrex-128/newstest2019-ref.arb.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-ref.arb.txt",
+   "sha256": "d271c8645933421f760eba8ed8cc1ceaaa052f917d9c2839b8abb27e0ded71e6"
+  },
+  "ntrex-128/newstest2019-ref.deu.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-ref.deu.txt",
+   "sha256": "259d7406a07b63e6b5b9c4a22fb76b85e2578a3fa0a4e541a50f4f7348e5c1b2"
+  },
+  "ntrex-128/newstest2019-ref.fra.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-ref.fra.txt",
+   "sha256": "1dd80d337f6a75c6ed579a95f09ca9b85d87d6e488d0a428c5f89cca99553136"
+  },
+  "ntrex-128/newstest2019-ref.ind.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-ref.ind.txt",
+   "sha256": "a28ea049cc73a7042bbea75abd6ed02a24362d3cf8d1a1cc519a7efd8bf5ceb5"
+  },
+  "ntrex-128/newstest2019-ref.jpn.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-ref.jpn.txt",
+   "sha256": "4debd275d04414b71c95bad5f68e7275174e32a4ed33ece1b9a43a227aea2fca"
+  },
+  "ntrex-128/newstest2019-ref.kor.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-ref.kor.txt",
+   "sha256": "2b50fa9a121b595ac7d3b9e98d901e72bafe68dcd945109ceb1fbbe782193638"
+  },
+  "ntrex-128/newstest2019-ref.por-BR.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-ref.por-BR.txt",
+   "sha256": "7256f0e90cc213b816c0d40a16c1c327f555095756bf5c5cbc306d8c9b767383"
+  },
+  "ntrex-128/newstest2019-ref.spa-MX.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-ref.spa-MX.txt",
+   "sha256": "79196a7d05549692e321fe70e75e51044d6312aac717e7ecf75412c9c99c1bc8"
+  },
+  "ntrex-128/newstest2019-ref.zho-CN.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-ref.zho-CN.txt",
+   "sha256": "8bcd6f0868d33f26c8da12f55a82f66088a7b60a5f7b0b1a99dcec51daa8054a"
+  },
+  "ntrex-128/newstest2019-src.eng.txt": {
+   "dataset": "NTREX-128",
+   "publisher": "Microsoft Translator",
+   "license": "CC BY-SA 4.0",
+   "revision": "468c6b69c7f6a75d31d4743d9daba2af566cc18d",
+   "url": "https://raw.githubusercontent.com/MicrosoftTranslator/NTREX/468c6b69c7f6a75d31d4743d9daba2af566cc18d/NTREX-128/newstest2019-src.eng.txt",
+   "sha256": "389e8f5796c66db4f646dfad33e1ec622d74767af5ef112b42a1f2cd814df3cc"
+  },
+  "wmt12/test.tgz": {
+   "dataset": "WMT12",
+   "publisher": "WMT",
+   "license": "research purposes",
+   "revision": null,
+   "url": "https://www.statmt.org/wmt12/test.tgz",
+   "sha256": "9fda0da47ed9810564929f836dabb85bff350692a58ec53f588f9e1a5a1b7714"
+  },
+  "wmt13/test.tgz": {
+   "dataset": "WMT13",
+   "publisher": "WMT",
+   "license": "research purposes",
+   "revision": null,
+   "url": "https://www.statmt.org/wmt13/test.tgz",
+   "sha256": "e87fb37e2a6b9f11d39f7771ee7d354343184a5f3a8e518942451e49cbf4c186"
+  },
+  "wmt23/wmttest2023.ja-en.all.xml": {
+   "dataset": "WMT23",
+   "publisher": "WMT",
+   "license": "research purposes",
+   "revision": "4515edff7e7423f54f9297c21574f2df62e8ff22",
+   "url": "https://raw.githubusercontent.com/wmt-conference/wmt23-news-systems/4515edff7e7423f54f9297c21574f2df62e8ff22/xml/wmttest2023.ja-en.all.xml",
+   "sha256": "ed25056af609891111a7ee2e60d4b1c7a5309f7bff06bf5f5b16e2d89d040e56"
+  },
+  "wmt23/wmttest2023.zh-en.all.xml": {
+   "dataset": "WMT23",
+   "publisher": "WMT",
+   "license": "research purposes",
+   "revision": "4515edff7e7423f54f9297c21574f2df62e8ff22",
+   "url": "https://raw.githubusercontent.com/wmt-conference/wmt23-news-systems/4515edff7e7423f54f9297c21574f2df62e8ff22/xml/wmttest2023.zh-en.all.xml",
+   "sha256": "6ffa7af15cdeb20aa7eb1e2e35b299773f313247fe94ca75fa89609232bafabb"
+  },
+  "wmt24pp/en-ar_EG.jsonl": {
+   "dataset": "WMT24++",
+   "publisher": "Google",
+   "license": "Apache-2.0 (dataset card)",
+   "note": "the underlying WMT texts have their own provenance",
+   "revision": "fd7405c06494bc66a57b25f55d217a72f96e60dc",
+   "url": "https://huggingface.co/datasets/google/wmt24pp/resolve/fd7405c06494bc66a57b25f55d217a72f96e60dc/en-ar_EG.jsonl",
+   "sha256": "b0de2f3cb16df2acd31bdddaa1dbba20019feb356a71a10b4fe6b63cc4942cd9"
+  },
+  "wmt24pp/en-de_DE.jsonl": {
+   "dataset": "WMT24++",
+   "publisher": "Google",
+   "license": "Apache-2.0 (dataset card)",
+   "note": "the underlying WMT texts have their own provenance",
+   "revision": "fd7405c06494bc66a57b25f55d217a72f96e60dc",
+   "url": "https://huggingface.co/datasets/google/wmt24pp/resolve/fd7405c06494bc66a57b25f55d217a72f96e60dc/en-de_DE.jsonl",
+   "sha256": "5f9e403833ccb3cbab90c9247cd9617ab6744060dc72cfcc7b470ea82d19bd05"
+  },
+  "wmt24pp/en-es_MX.jsonl": {
+   "dataset": "WMT24++",
+   "publisher": "Google",
+   "license": "Apache-2.0 (dataset card)",
+   "note": "the underlying WMT texts have their own provenance",
+   "revision": "fd7405c06494bc66a57b25f55d217a72f96e60dc",
+   "url": "https://huggingface.co/datasets/google/wmt24pp/resolve/fd7405c06494bc66a57b25f55d217a72f96e60dc/en-es_MX.jsonl",
+   "sha256": "e88f65699e094b8bf865deb3424aa8d4ef17a6cadf687e2d5af78ab70d98c2ee"
+  },
+  "wmt24pp/en-fr_FR.jsonl": {
+   "dataset": "WMT24++",
+   "publisher": "Google",
+   "license": "Apache-2.0 (dataset card)",
+   "note": "the underlying WMT texts have their own provenance",
+   "revision": "fd7405c06494bc66a57b25f55d217a72f96e60dc",
+   "url": "https://huggingface.co/datasets/google/wmt24pp/resolve/fd7405c06494bc66a57b25f55d217a72f96e60dc/en-fr_FR.jsonl",
+   "sha256": "af9722b702087c0d3dfbd51bf6fd61b5bb89bce5bfc981615c68260253d1e676"
+  },
+  "wmt24pp/en-id_ID.jsonl": {
+   "dataset": "WMT24++",
+   "publisher": "Google",
+   "license": "Apache-2.0 (dataset card)",
+   "note": "the underlying WMT texts have their own provenance",
+   "revision": "fd7405c06494bc66a57b25f55d217a72f96e60dc",
+   "url": "https://huggingface.co/datasets/google/wmt24pp/resolve/fd7405c06494bc66a57b25f55d217a72f96e60dc/en-id_ID.jsonl",
+   "sha256": "32fb9b154df4a05ea84d8614ff4a22b50a862438645f2deb4d0167cfcc0d75f0"
+  },
+  "wmt24pp/en-ja_JP.jsonl": {
+   "dataset": "WMT24++",
+   "publisher": "Google",
+   "license": "Apache-2.0 (dataset card)",
+   "note": "the underlying WMT texts have their own provenance",
+   "revision": "fd7405c06494bc66a57b25f55d217a72f96e60dc",
+   "url": "https://huggingface.co/datasets/google/wmt24pp/resolve/fd7405c06494bc66a57b25f55d217a72f96e60dc/en-ja_JP.jsonl",
+   "sha256": "58bbee69aed537d21e25f04c5eaf49c2c7aef1b1dddb918f6eac424ab93c7ec8"
+  },
+  "wmt24pp/en-ko_KR.jsonl": {
+   "dataset": "WMT24++",
+   "publisher": "Google",
+   "license": "Apache-2.0 (dataset card)",
+   "note": "the underlying WMT texts have their own provenance",
+   "revision": "fd7405c06494bc66a57b25f55d217a72f96e60dc",
+   "url": "https://huggingface.co/datasets/google/wmt24pp/resolve/fd7405c06494bc66a57b25f55d217a72f96e60dc/en-ko_KR.jsonl",
+   "sha256": "4520124f3769cd711aab0c939aeb849a225dce51b761eeb419f46e555b02d7e5"
+  },
+  "wmt24pp/en-pt_BR.jsonl": {
+   "dataset": "WMT24++",
+   "publisher": "Google",
+   "license": "Apache-2.0 (dataset card)",
+   "note": "the underlying WMT texts have their own provenance",
+   "revision": "fd7405c06494bc66a57b25f55d217a72f96e60dc",
+   "url": "https://huggingface.co/datasets/google/wmt24pp/resolve/fd7405c06494bc66a57b25f55d217a72f96e60dc/en-pt_BR.jsonl",
+   "sha256": "502fa1c3eef72f8a53b1f88554bc1bc89b0ed31962091310b38024b14795ff35"
+  },
+  "wmt24pp/en-zh_CN.jsonl": {
+   "dataset": "WMT24++",
+   "publisher": "Google",
+   "license": "Apache-2.0 (dataset card)",
+   "note": "the underlying WMT texts have their own provenance",
+   "revision": "fd7405c06494bc66a57b25f55d217a72f96e60dc",
+   "url": "https://huggingface.co/datasets/google/wmt24pp/resolve/fd7405c06494bc66a57b25f55d217a72f96e60dc/en-zh_CN.jsonl",
+   "sha256": "984ec4da714800aae2b9ee6e2601d1cadb01a770e01ed385d5283ce7a0585287"
+  }
+ }
+}

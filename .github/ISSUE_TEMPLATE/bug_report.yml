@@ -1,0 +1,26 @@
+name: Bug
+description: A command fails or does something unexpected
+labels: ["bug"]
+body:
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and what you expected
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened
+      description: The error or output, without test texts, outputs, API keys or local paths
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: translate-bench --version, Python version, operating system, and the server for run or judge
+    validations:
+      required: true

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: A file exposes a credential, a local path or test text
+    url: https://github.com/takechanman1228/translate-bench/security/advisories/new
+    about: Report it privately (SECURITY.md); do not open a public issue.
