@@ -125,6 +125,18 @@ PRIVATE_FILES = re.compile(r"(?:^|/)(?:private|\.cache)/|\.(?:tsv|gguf|safetenso
 BINARY_OK = (".png",)
 # The self-written synthetic example set (CC0) may hold text, under ids that start with "synthetic/" only.
 SYNTHETIC = re.compile(r"^examples/external-predictions/data/(?:sentences\.tsv|passages\.tsv|predictions\.jsonl)$")
+# The hard-cases track (results/ltb-v1/) publishes these files only, and its row files these fields only.
+LTB_FILES = re.compile(r"^results/ltb-v1/(?:items\.jsonl|summary\.json|second-verifier\.json|protocol\.md"
+                       r"|rows/[a-z0-9][a-z0-9.-]*\.jsonl)$")
+# results/v1.1/ holds the generated Overall score only.
+OVERALL_FILES = re.compile(r"^results/v1\.1/overall\.json$")
+LTB_FIELDS = {
+    "results/ltb-v1/items.jsonl": {"id", "direction", "source_iso", "target_iso", "source_label", "target_label",
+                                   "source_sha256", "rules", "ours"},
+    "rows": {"id", "pass", "verdicts", "status", "translation_sha256"},
+}
+LTB_LABELS = ("source_label", "target_label")
+LTB_LABEL_MAX = 48
 WORD = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_-]*")
 SALT_CANDIDATE = re.compile(r"[\w.-]+(?:/[\w.-]+)+/")
 
@@ -299,11 +311,25 @@ def inspect(path, data, lists=None):
         if not synthetic_ids(path, text):
             problems.add("synthetic example with an id outside synthetic/")
         return problems
+    if path.startswith("results/ltb-v1/") and not LTB_FILES.match(path):
+        problems.add("file outside the hard-cases allow-list")
+    if path.startswith("results/v1.1/") and not OVERALL_FILES.match(path):
+        problems.add("file outside the Overall-score allow-list")
     try:
         if path.endswith(".jsonl"):
             values = [json.loads(line) for line in text.splitlines() if line.strip()]
             for value in values:
+                if path == "results/ltb-v1/items.jsonl" and isinstance(value, dict):
+                    # LTB's language labels name a variety, e.g. "French (Switzerland, Canton of Vaud)".
+                    labels = [value.get(k) for k in LTB_LABELS]
+                    if any(not isinstance(x, str) or len(x) > LTB_LABEL_MAX for x in labels):
+                        problems.add("language label too long or missing")
+                    value = {k: v for k, v in value.items() if k not in LTB_LABELS}
                 walk(value, "", path, problems, rows_file=True)
+            if path.startswith("results/ltb-v1/"):
+                allowed = LTB_FIELDS.get(path, LTB_FIELDS["rows"])
+                if any(not isinstance(v, dict) or set(v) - allowed for v in values):
+                    problems.add("field outside the hard-cases allow-list")
         elif path.endswith(".json"):
             rows = "/items/" in path or re.search(r"/judge/(?:pairwise|errors)/", path)
             walk(json.loads(text), "", path, problems, rows_file=bool(rows))

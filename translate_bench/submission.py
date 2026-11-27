@@ -152,7 +152,7 @@ def validate(root, folder):
     if measurement.get("sacrebleu_signature") != chrf.SIGNATURE:
         problems.append(f"system.json: chrF++ signature differs from the release's {chrf.SIGNATURE}")
     if "comet22" not in metrics:
-        problems.append("system.json: no COMET-22 scores; the release ranks by COMET-22 (score with "
+        problems.append("system.json: no COMET-22 scores; the release ranks every selection by COMET-22 (score with "
                         "--metrics chrf,comet22,metricx24)")
     else:
         changed = [k for k, v in COMET_PINS.items() if measurement.get(k) != v]

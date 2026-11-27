@@ -4,7 +4,7 @@ Run the commands from the checkout with Python 3.11 or 3.12. Each command lists 
 
 ## Verify
 
-`verify` recomputes the summary, rankings, intervals and judge aggregates from the item rows, offline.
+`verify` recomputes the summary, rankings, intervals and judge aggregates from the item rows, the hard-case pass rates and intervals from their verdict rows, and the Overall score from those summaries, offline.
 
 ```sh
 python -m pip install -e .
@@ -12,6 +12,13 @@ translate-bench verify
 ```
 
 Speed, memory and cloud outputs cannot be recomputed from the published rows.
+
+`leaderboard` prints the table, ranked by the Overall score; `--metric` ranks by another measure, and `--pairs` and `--view` select language pairs and text types for the measures computed from the item rows.
+
+```sh
+translate-bench leaderboard                          # Overall score, with COMET-22, error-free and hard cases
+translate-bench leaderboard --metric comet22 --pairs en-ja
+```
 
 ## Prepare
 

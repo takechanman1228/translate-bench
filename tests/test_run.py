@@ -61,7 +61,7 @@ class RunTest(unittest.TestCase):
         self.assertEqual(record["counts"], dict(items=10, ok=10, empty=0, timeout=0, error=0, selected_not_run=0))
         self.assertEqual(record["sessions"][0]["directions"], ["en-de"])
         self.assertFalse(record["inputs"]["verified_release_items"])
-        self.assertEqual(record["tool"], "translate-bench 1.0.0")
+        self.assertEqual(record["tool"], "translate-bench 1.1.0")
 
     def test_http_500_then_success(self):
         self.server.script = ["500", "500"]

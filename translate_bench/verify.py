@@ -3,7 +3,10 @@
 Needs only NumPy and sacreBLEU, no network, model or test text. It validates every results
 file against the schema, recomputes every number in the summary (scores, coverage, paired
 intervals, size steps, MetricX-24 aggregates) from the item rows and exits non-zero on any
-difference. It also recomputes the judge v1 aggregates (results/v1/judge/) and the speed subsets.
+difference. It also recomputes the judge v1 aggregates (results/v1/judge/), the speed subsets and,
+when results/ltb-v1/ exists, the hard-cases pass rates and their intervals (translate_bench/ltb.py) and,
+when results/v1.1/overall.json exists, the Overall score from the three results it averages
+(translate_bench/overall.py).
 
 Speed, memory and cost are published measurements that the item rows cannot reproduce; verify
 checks them for schema and range only. The summary's choices by memory, speed and cost are
@@ -356,7 +359,7 @@ def speed_subset_problems(root, release):
 
 
 def main(root, quiet=False):
-    from translate_bench import judge_results
+    from translate_bench import judge_results, ltb, overall
 
     problems = schema_problems(root)
     if problems:
@@ -370,6 +373,8 @@ def main(root, quiet=False):
     found = differences(published, recomputed)
     found += speed_subset_problems(root, release)
     found += judge_results.check(root)
+    found += ltb.check(root)
+    found += overall.check(root)
     for line in found:
         print(line)
     systems = len(release.published)
@@ -383,6 +388,17 @@ def main(root, quiet=False):
         print(f"verify: {systems} systems, {rows:,} item rows. Every results file matches its schema. "
               "Recomputed from the item rows with no difference: summary.json (scores, coverage, paired intervals, "
               f"size steps, MetricX-24 aggregates){judged}. Recomputed from the item ids: the speed subsets.")
+        if ltb.exists(root):
+            count = len(schema.read_json(root / ltb.BASE / "summary.json")["systems"])
+            second = " and the second verifier's counts checked against them" if ltb.second_verifier(root) else ""
+            print(f"verify: hard cases (results/ltb-v1/): pass rates and bootstrap intervals of {count} systems, on "
+                  "all items, on those in the release's directions and, below 18 directions, on those in the covered "
+                  f"directions, recomputed from the rows with no difference{second}.")
+        if overall.exists(root):
+            counts = schema.read_json(root / overall.PATH)["counts"]
+            print(f"verify: Overall score ({overall.PATH.as_posix()}): {counts['overall']} of {counts['systems']} "
+                  "systems, recomputed from summary.json, the judge summary and the hard-cases summary with no "
+                  "difference.")
         print("verify: speed, memory and cost figures are published measurements and cannot be recomputed from the "
               "item rows; they are checked for schema and range only. The memory, speed and cost choices in "
               "summary.json were recomputed from them.")

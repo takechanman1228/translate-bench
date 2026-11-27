@@ -31,15 +31,53 @@ class ExportTest(unittest.TestCase):
         self.assertNotEqual(readme.blocks(new), readme.blocks(tampered))
         self.assertEqual(new, text)
 
-    def test_claims_follow_the_intervals(self):
+    def test_top_table_follows_the_overall_score(self):
+        text = readme.top_table(self.facts, "en")
+        rows = [line for line in text.splitlines()
+                if line.startswith("| ") and not line.startswith(("| System", "| ---"))]
+        self.assertEqual(len(rows), readme.TOP_ROWS)
+        self.assertTrue(rows[0].startswith("| Claude Fable 5.2 | Cloud | 81.4 | 0.8605 | 96.5% | 61.5% |"), rows[0])
+        self.assertIn("| Gemma 4 31B IT | Local | 56.2 |", text)
+        self.assertIn("leading group rather than one winner", text)
+        self.assertNotIn("winner is", text)
+
+    def test_leading_group_needs_the_uncertainty(self):
         facts = Facts(ROOT)
-        facts.paired = lambda a, b, view="overall": dict(delta=-0.01, ci95=[-0.02, -0.005], n=3960)
+        scores = dict(facts.overall_data["systems"])
+        scores["claude-fable-5-2"] = dict(scores["claude-fable-5-2"], overall=90.0)  # far ahead of the second
+        facts.overall_data = dict(facts.overall_data, systems=scores)
         with self.assertRaises(ValueError):
-            readme.finding_small_models(facts, "en")
-        facts.paired = lambda a, b, view="overall": dict(delta=0.0, ci95=[-0.001, 0.001], n=3960)
-        text = readme.finding_small_models(facts, "en")
-        self.assertIn(" ties ", text)
-        self.assertNotIn(" beats ", text)
+            readme.leading_group(facts, "en")
+
+    def test_findings_check_their_claims(self):
+        text = readme.findings(self.facts, "en")
+        self.assertIn("Seven cloud systems pass 40% or more of the 208 hard items", text)
+        self.assertIn("Every one of the 27 local systems passes fewer than 10%", text)
+        self.assertIn("on Overall, Gemma 4 31B IT, is ahead of DeepL API** (56.2 against 53.6)", text)
+        facts = Facts(ROOT)
+        original = facts.hard
+
+        def harder(sid):  # a local system passing 12% of the hard items
+            return 0.12 if sid == "gemma-4-31b-it" else original(sid)
+        facts.hard = harder
+        with self.assertRaises(ValueError):
+            readme.finding_hard(facts, "en")
+        facts = Facts(ROOT)
+        facts.overall = lambda sid: 50.0 if sid == "gemma-4-31b-it" else facts.overall_data["systems"][sid]["overall"]
+        with self.assertRaises(ValueError):
+            readme.finding_local_vs_reference(facts, "en")
+
+    def test_overall_section_names_verifiers_and_credit(self):
+        for lang in ("en", "ja"):
+            text = readme.overall_section(self.facts, lang)
+            self.assertIn("Claude Sonnet 5.5", text)
+            self.assertIn("Gemini 3.8 Flash", text)
+            self.assertIn("arXiv:2609.04173", text)
+            self.assertIn("CC BY 4.0", text)
+            self.assertIn("97.1%", text)
+            self.assertIn("2,080", text)
+            self.assertIn("3.4", text)
+        self.assertIn("not official LTB leaderboard numbers", readme.overall_section(self.facts, "en"))
 
     def test_site_data_matches_and_drift_is_caught(self):
         published = site_data.parse((ROOT / site_data.OUT).read_text(encoding="utf-8"))
@@ -59,30 +97,6 @@ class ExportTest(unittest.TestCase):
         data = site_data.build(ROOT)
         self.assertEqual(data["judge"]["source"], "v1")
         self.assertEqual(data["judge"]["label"], "judge v1")
-
-    def test_judge_v1_claims_follow_the_intervals(self):
-        facts = Facts(ROOT)
-        text = readme.finding_measures(facts, "en")
-        self.assertIn("Nine cloud systems beat DeepL API on the judge", text)
-        self.assertIn("No local system does", text)
-        self.assertNotIn("separates", text)
-        self.assertNotIn("分ける", readme.finding_measures(facts, "ja"))
-        original = facts.judge.versus_reference
-
-        def shifted(sid, scope="all"):
-            v = dict(original(sid, scope) or {})
-            if v and facts.kind(sid) == "local":
-                v.update(preferred=0.6, net=0.1, net_95=[0.01, 0.2])  # a local system preferred to DeepL API
-            return v or None
-        facts.judge.versus_reference = shifted
-        with self.assertRaises(ValueError):
-            readme.finding_measures(facts, "en")
-
-    def test_metricx_order_claims_need_their_intervals(self):
-        facts = Facts(ROOT)
-        facts.paired_metricx = lambda a, b, view="overall": dict(delta=-0.1, ci95=[-0.2, 0.01], n=3960)
-        with self.assertRaises(ValueError):  # the top local system's MetricX-24 lead would not be resolved
-            readme.finding_measures(facts, "en")
 
     def test_systems_table_covers_the_registry(self):
         text = readme.systems_table(self.facts)

@@ -5,7 +5,7 @@ export PYTHONDONTWRITEBYTECODE := 1
 export OPENBLAS_NUM_THREADS := 1
 export VECLIB_MAXIMUM_THREADS := 1
 
-.PHONY: check verify test lint public-tree generated site readme figures
+.PHONY: check verify test lint public-tree generated overall site readme figures
 
 check: lint test public-tree verify generated
 
@@ -21,10 +21,15 @@ public-tree:
 verify:
 	$(PYTHON) -m translate_bench.cli verify
 
-# The generated blocks of the READMEs and docs, and site/data.js, must match results/v1.
+# results/v1.1/overall.json, the generated blocks of the READMEs and docs, and site/data.js must match the results.
 generated:
+	$(PYTHON) -m translate_bench.overall --check
 	$(PYTHON) -m translate_bench.export.readme --check
 	$(PYTHON) -m translate_bench.export.site_data --check
+
+# Write results/v1.1/overall.json from results/v1/ and results/ltb-v1/; run before `make readme` and `make site`.
+overall:
+	$(PYTHON) -m translate_bench.overall
 
 site:
 	$(PYTHON) -m translate_bench.export.site_data

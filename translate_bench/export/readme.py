@@ -1,12 +1,13 @@
-"""Fill the generated parts of README.md, README.ja.md, docs/metrics.md and docs/methodology.md from results/v1/.
+"""Fill the generated parts of README.md, README.ja.md, docs/metrics.md and docs/methodology.md from the results.
 
     python -m translate_bench.export.readme          # rewrite the generated blocks
     python -m translate_bench.export.readme --check  # exit 1 if a generated block differs from the results
 
 A generated block sits between `<!-- tb:NAME -->` and `<!-- /tb:NAME -->`; the text around it is
-written by hand. Every number in a block comes from the published files through `facts.Facts`, and
-a comparison word ("above", "not resolved") follows the paired 95% interval, so a change in the results
-either changes the sentence or, for a claim the wording cannot follow, stops the generator.
+written by hand. Every number in a block comes from the published files through `facts.Facts`
+(results/v1/, results/ltb-v1/ and results/v1.1/overall.json). A sentence that states an order or a
+direction ("ahead of", "lower", "under 10%") checks it first, so a change in the results either
+changes the sentence or, for a claim the wording cannot follow, stops the generator.
 """
 
 import argparse
@@ -20,8 +21,13 @@ from translate_bench.export.facts import REFERENCE, Facts, require
 
 FILES = {"README.md": "en", "README.ja.md": "ja", "docs/metrics.md": "metrics", "docs/methodology.md": "methodology"}
 BLOCK = re.compile(r"(<!-- tb:([\w.:/-]+) -->\n)(.*?)(<!-- /tb:\2 -->)", re.S)
-NUMBER_WORDS = {2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten",
-                11: "eleven", 12: "twelve"}
+NUMBER_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine",
+                10: "ten", 11: "eleven", 12: "twelve"}
+LEADERBOARD = "https://takechanman1228.github.io/translate-bench/"
+LTB_URL = "https://github.com/zouharvi/last-translation-benchmark"
+LTB_PAPER = "https://arxiv.org/abs/2609.04173"
+ANCHOR = {"en": "#overall-score", "ja": "#総合スコア"}
+TOP_ROWS = 12  # the top ten are all cloud systems; twelve rows reach the top local system and DeepL API
 
 
 # Formatting -----------------------------------------------------------------------------------------------
@@ -34,30 +40,27 @@ def pct(x):
     return f"{100 * x:.0f}%"
 
 
-def relation(facts, a, b):
-    """"above", "level" or "below": how a compares with b on COMET-22 overall, by the paired 95% interval."""
-    lo, hi = facts.paired(a, b)["ci95"]
-    return "above" if lo > 0 else "below" if hi < 0 else "level"
+def pct1(x):
+    return f"{100 * x:.1f}%"
 
 
-def clause(lang, subject, pairs):
-    """One sentence on how `subject` compares with each target: "X beats A and B, and ties C."
+def o1(x):
+    return f"{x:.1f}"
 
-    `pairs` is [(relation, target)]; a "level" pair (the paired 95% interval includes zero) is a tie."""
-    groups = [(rel, [t for r, t in pairs if r == rel]) for rel in ("above", "level", "below")]
-    groups = [(rel, ts) for rel, ts in groups if ts]
-    if lang == "en":
-        verb = {"above": "beats", "level": "ties", "below": "is below"}
-        parts = [f"{verb[rel]} {' and '.join(ts)}" for rel, ts in groups]
-        joiner = ", and " if any(len(ts) > 1 for _, ts in groups) else " and "
-        return f"{subject} {joiner.join(parts)}."
-    mid = {"above": "を上回り", "level": "と同等で", "below": "を下回り"}
-    end = {"above": "を上回る", "level": "と同等", "below": "を下回る"}
-    parts = ["と".join(ts) + (end if i == len(groups) - 1 else mid)[rel] for i, (rel, ts) in enumerate(groups)]
-    return f"{subject}は{'、'.join(parts)}。"
+
+def signed(x):
+    return f"{'−' if x < 0 else '+'}{abs(x):.2f}"
+
+
+def words(n, lang="en"):
+    return NUMBER_WORDS.get(n, str(n)) if lang == "en" else str(n)
 
 
 # README blocks --------------------------------------------------------------------------------------------
+
+def hard_items(facts):
+    return facts.hard_summary["dataset"]["our_direction_items"]
+
 
 def counts(facts, lang):
     n, full = facts.count_systems(), len(facts.ranked())
@@ -65,186 +68,344 @@ def counts(facts, lang):
     dirs = len(schema.DIRECTIONS)
     sent, pas = schema.CELL_SIZE["sentence"], schema.CELL_SIZE["passage"]
     items = dirs * (sent + pas)
+    hard = hard_items(facts)
     if lang == "en":
         return "\n".join([
             f"- **Systems:** {n} configurations ({local} local, {cloud} cloud). {full} cover all {dirs} directions.",
             f"- **Test set:** {dirs} directions between English and 9 languages. Each has {sent} news sentences and "
             f"{pas} longer passages ({items:,} items in total).",
             "- **Hardware:** local models ran on one Apple M6 with 32 GiB of memory.",
-            "- **Quality:** COMET-22, MetricX-24 and an LLM judge, reported side by side. There is no combined score.",
+            f"- **Quality:** COMET-22, MetricX-24, an LLM judge and {hard} hard cases from the Last Translation "
+            f"Benchmark, side by side, plus an [Overall score]({ANCHOR['en']}) that averages three of them.",
         ])
     return "\n".join([
         f"- **構成：** {n}（ローカル{local}、クラウド{cloud}）。うち{full}構成が{dirs}方向すべてに対応。",
         f"- **評価データ：** 英語と9言語の間の{dirs}方向。各方向にニュース文{sent}文と長めの文章{pas}件"
         f"（合計{items:,}件）。",
         "- **実行環境：** ローカルモデルはメモリ32 GiBのApple M6 1台で実行。",
-        "- **品質の指標：** COMET-22、MetricX-24、LLMによる判定。1つのスコアにはまとめず、並べて示す。",
+        f"- **品質の指標：** COMET-22、MetricX-24、LLMによる判定、Last Translation Benchmarkの難しい例{hard}件を"
+        f"並べて示し、うち3つを平均した[総合スコア]({ANCHOR['ja']})も付ける。",
     ])
 
 
-def top_table(facts, lang, n=5):
-    """The first rows of the leaderboard: the top `n` cloud and local systems by COMET-22."""
-    judge = facts.judge
+def leading_group(facts, lang):
+    """The first two by Overall, as a group: their gap is within the hard-case sampling uncertainty."""
+    a, b = facts.ranked_overall()[:2]
+    gap = facts.overall(a) - facts.overall(b)
+    # A third of the half-width of each leader's 95% hard-case interval is what that pillar alone can move Overall.
+    ci = {s: facts.hard_figure(s)["ci95"] for s in (a, b)}
+    half = min(100 * (ci[s][1] - ci[s][0]) / 2 / 3 for s in (a, b))
+    require(gap < half, "the first two systems by Overall are closer than the hard-case uncertainty can move them")
+    n = hard_items(facts)
+    nm = facts.name
+    if lang == "en":
+        return (f"{nm(a)} ({o1(facts.overall(a))}) and {nm(b)} ({o1(facts.overall(b))}) lead, {o1(gap)} points apart. "
+                f"That gap is within the uncertainty of the {n} hard items, so the two form a leading group rather "
+                f"than one winner.")
+    return (f"先頭は{nm(a)}（{o1(facts.overall(a))}）と{nm(b)}（{o1(facts.overall(b))}）で、差は{o1(gap)}ポイント。"
+            f"難しい例{n}件の不確かさの範囲内なので、どちらか一方を勝者とせず、先頭集団として扱います。")
+
+
+def top_table(facts, lang, n=TOP_ROWS):
+    """The first rows of the leaderboard: the top `n` systems by the Overall score."""
     en = lang == "en"
     rows = []
-    for kind in ("cloud", "local"):
-        for s in facts.ranked(kind)[:n]:
-            vs = judge.versus_reference(s)
-            ef = judge.error_free(s)
-            mem, sec = facts.memory(s), facts.seconds(s)
-            local = kind == "local"
-            cells = [facts.name(s),
-                     {"cloud": "Cloud" if en else "クラウド", "local": "Local" if en else "ローカル"}[kind],
-                     c4(facts.comet(s)), f"{facts.metricx(s):.3f}",
-                     ("baseline" if en else "基準") if s == REFERENCE else pct(vs["preferred"]) if vs else "—",
-                     pct(ef["error_free"]) if ef else "—",
-                     f"{mem:.2f} GiB" if local and mem is not None else "—",
-                     f"{sec:.2f} s" if local and sec is not None else "—"]
-            rows.append("| " + " | ".join(cells) + " |")
-    full = len(facts.ranked())
-    total = facts.count_systems()
-    url = "https://takechanman1228.github.io/translate-bench/"
+    for s in facts.ranked_overall()[:n]:
+        ef = facts.judge.error_free(s)
+        mem, sec = facts.memory(s), facts.seconds(s)
+        local = facts.kind(s) == "local"
+        comet = facts.comet(s) if facts.full(s) else facts.comet(s, "overall_measured")
+        cells = [facts.name(s) + facts.coverage_mark(s),
+                 ("Local" if en else "ローカル") if local else ("Cloud" if en else "クラウド"),
+                 o1(facts.overall(s)), c4(comet), pct1(ef["error_free"]), pct1(facts.hard(s)),
+                 f"{mem:.2f} GiB" if local and mem is not None else "—",
+                 f"{sec:.2f} s" if local and sec is not None else "—"]
+        rows.append("| " + " | ".join(cells) + " |")
+    k, total = len(facts.ranked_overall()), facts.count_systems()
     if en:
-        head = ("| System | Type | COMET-22 ↑ | MetricX-24 ↓ | Judge vs DeepL API ↑ | Error-free ↑ | Peak memory | "
+        head = ("| System | Type | Overall ↑ | COMET-22 ↑ | Error-free ↑ | Hard cases ↑ | Peak memory | "
                 "Per sentence |\n| --- | --- | --- | --- | --- | --- | --- | --- |")
-        intro = (f"The top {NUMBER_WORDS[n]} cloud and top {NUMBER_WORDS[n]} local systems by COMET-22, among the "
-                 f"{full} that cover all 18 directions. All {total} are on the [leaderboard]({url}).")
+        intro = (f"The top {words(n)} of the {k} systems with an [Overall score]({ANCHOR['en']}), the mean of "
+                 f"COMET-22, the share of error-free translations and the pass rate on hard cases. All {total} systems "
+                 f"are on the [leaderboard]({LEADERBOARD}).")
         note = ("Cloud systems received up to 25 sentences or 5 passages per request, and local models one item per "
                 "request. Memory and time per sentence are shown for local systems only.")
     else:
-        head = ("| 構成 | 種類 | COMET-22 ↑ | MetricX-24 ↓ | 判定（対DeepL API）↑ | 誤りなし ↑ | ピークメモリ | "
-                "1文あたり |\n"
+        head = ("| 構成 | 種類 | 総合 ↑ | COMET-22 ↑ | 誤りなし ↑ | 難しい例 ↑ | ピークメモリ | 1文あたり |\n"
                 "| --- | --- | --- | --- | --- | --- | --- | --- |")
-        intro = (f"18方向すべてに対応した{full}構成のうち、COMET-22の上位{n}構成を"
-                 f"クラウドとローカルそれぞれで示します。"
-                 f"全{total}構成は[リーダーボード]({url})にあります。")
+        intro = (f"[総合スコア]({ANCHOR['ja']})を持つ{k}構成のうち、上位{n}構成を示します。総合スコアは、COMET-22、"
+                 f"誤りのない訳の割合、難しい例の合格率の平均です。全{total}構成は[リーダーボード]({LEADERBOARD})に"
+                 f"あります。")
         note = ("クラウド構成には1回の依頼で最大25文または文章5件をまとめて渡し、ローカルモデルには1件ずつ渡しました。"
                 "メモリと1文あたりの時間はローカル構成だけに示します。")
-    return intro + "\n\n" + head + "\n" + "\n".join(rows) + "\n\n" + note
+    return intro + "\n\n" + head + "\n" + "\n".join(rows) + "\n\n" + leading_group(facts, lang) + "\n\n" + note
 
 
-def finding_small_models(facts, lang):
-    small, small2 = "index-translate-2b", "hy-mt2-7b"
-    general_small = ["qwen3.5-9b", "gemma-4-e4b-it"]
-    general_large = ["qwen3.5-27b", "gemma-4-31b-it"]
-    cloud = "claude-haiku-5-5"
-    pairs = [(small, g) for g in general_small] + [(small2, g) for g in general_large]
-    for a, b in pairs:
-        require(relation(facts, a, b) != "below", f"{facts.name(a)} is not below {facts.name(b)} on COMET-22")
-    ratios = [facts.systems[b]["parameters"] / facts.systems[a]["parameters"] for a, b in pairs]
-    lo, hi = min(ratios), max(ratios)
-    require(lo >= 2, "the general models are at least twice the size")
-    en = lang == "en"
-    t = {s: f"{facts.name(s)} ({c4(facts.comet(s))})" if en else f"{facts.name(s)}（{c4(facts.comet(s))}）"
-         for s in [small, small2, *general_small, *general_large, cloud]}
-    first = clause(lang, t[small], [(relation(facts, small, g), t[g]) for g in [*general_small, cloud]])
-    second = clause(lang, t[small2], [(relation(facts, small2, g), t[g]) for g in general_large])
-    if en:
-        return (f"**Small translation models match general models {lo:.1f} to {hi:.1f} times their size.** "
-                f"On COMET-22, {first} {second[:-1]} ([figure](figures/size-quality.svg)).")
-    return (f"**翻訳専用の小さなモデルは、{lo:.1f}〜{hi:.1f}倍大きい汎用モデルに並ぶ。** "
-            f"COMET-22で、{first}{second[:-1]}（[図](figures/size-quality.svg)）。")
-
-
-def finding_measures(facts, lang):
-    """COMET-22, MetricX-24 and the judge on the local-to-cloud gap: only what the intervals support."""
-    local, cloud = facts.ranked("local")[0], facts.ranked("cloud")[0]
-    ref = REFERENCE
-    gap = facts.paired(cloud, local)
-    require(gap["ci95"][0] > 0, "the top cloud system is above the top local system on COMET-22")
-    mx_local, mx_cloud = facts.metricx(local), facts.metricx(cloud)
-    require(facts.paired_metricx(local, cloud)["ci95"][1] < 0,
-            "MetricX-24 puts the top local system ahead of the top cloud system, beyond the paired interval")
-    judge = facts.judge
-    pref = {s: judge.versus_reference(s) for s in facts.systems if s != ref}
-    pref = {s: v for s, v in pref.items() if v}
-    clouds = [s for s in pref if facts.kind(s) == "cloud"]
-    locals_ = sorted((s for s in pref if facts.kind(s) == "local"), key=lambda s: -pref[s]["preferred"])
-    above = [s for s in clouds if pref[s]["net_95"][0] > 0]
-    require(len(above) >= 2, "several cloud systems are preferred to DeepL API")
-    require(all(pref[s]["net_95"][1] < 0 for s in locals_), "every local system's net interval is below zero")
-    full = set(facts.ranked())
-    top_local = next(s for s in locals_ if s in full)
-    require(pref[cloud]["net_95"][0] > 0, "the top cloud system is preferred to DeepL API")
+def finding_standard(facts, lang):
+    """On COMET-22 the leading cloud systems and the best local system sit in one narrow band."""
+    top = [s for s in facts.ranked_overall("cloud")][:10]
+    require(top == facts.ranked_overall()[:10], "the ten systems with the highest Overall score are cloud systems")
+    lo, hi = min(map(facts.comet, top)), max(map(facts.comet, top))
+    local = facts.ranked("local")[0]
+    require(lo <= facts.comet(local) <= hi, "the best local COMET-22 lies within the range of the top ten by Overall")
     nm = facts.name
-    d = f"{abs(gap['delta']):.4f}"
-    share = {s: pct(pref[s]["preferred"]) for s in (cloud, local, top_local)}
     if lang == "en":
-        return (f"**The best local model is within {d} COMET-22 of the best cloud model, but far behind it on the "
-                f"LLM judge.** {nm(local)} scores {c4(facts.comet(local))} against {c4(facts.comet(cloud))} for "
-                f"{nm(cloud)}, and is ahead on MetricX-24 ({mx_local:.3f} against {mx_cloud:.3f}, lower is better). "
-                f"The judge preferred {nm(cloud)} to {nm(ref)} on {share[cloud]} of non-tied items, and {nm(local)} "
-                f"on {share[local]}. {NUMBER_WORDS.get(len(above), len(above)).capitalize()} cloud systems beat "
-                f"{nm(ref)} on the judge. No local system does. Among those with all 18 directions, "
-                f"{nm(top_local)} comes closest at {share[top_local]}.")
-    return (f"**ローカル首位は、COMET-22でクラウド首位と{d}差。ただしLLMによる判定では大きく離される。** "
-            f"{nm(local)}は{c4(facts.comet(local))}、{nm(cloud)}は{c4(facts.comet(cloud))}。"
-            f"MetricX-24では{nm(local)}が上（{mx_local:.3f}対{mx_cloud:.3f}、低いほど良い）。"
-            f"判定で{nm(ref)}より良いとされた割合（引き分けを除く）は、{nm(cloud)}が{share[cloud]}、"
-            f"{nm(local)}が{share[local]}。{nm(ref)}を上回ったのはクラウドの{len(above)}構成で、ローカルにはない。"
-            f"18方向すべてに対応したローカル構成で最も近いのは、{nm(top_local)}の{share[top_local]}。")
+        return (f"**On the standard metric, cloud and local systems are close.** On COMET-22, the {words(len(top))} "
+                f"systems with the highest Overall score, all cloud, lie between {c4(lo)} and {c4(hi)}. The best local "
+                f"system on COMET-22, {nm(local)} ({c4(facts.comet(local))}), lies between them.")
+    return (f"**標準的な指標では、クラウドとローカルの差は小さい。** "
+            f"COMET-22で、総合スコア上位{len(top)}構成（すべてクラウド）は{c4(lo)}〜{c4(hi)}の範囲にある。COMET-22のローカル首位{nm(local)}（{c4(facts.comet(local))}）も"
+            f"その範囲に入る。")
 
 
-def finding_memory(facts, lang):
-    four, eight, top = (facts.choice(r) for r in ("within-4-gib", "within-8-gib", "any-memory"))
-    require(four["versus_leader"]["ci95"][1] < 0 and eight["versus_leader"]["ci95"][1] < 0,
-            "the 4 and 8 GiB choices are below the leader")
-    share = eight["memory"] / top["memory"]
-    require(0.30 <= share <= 0.37, "the 8 GiB choice uses about a third of the leader's memory")
-    n = {c["rule"]: facts.name(c["system"]) for c in (four, eight, top)}
-    d8 = f"{abs(eight['versus_leader']['delta']):.4f}"
+def finding_hard(facts, lang):
+    """On hard cases the leading cloud systems pass 40% or more; every local system stays under 10%."""
+    rates = {s: facts.hard(s) for s in facts.systems if facts.hard(s) is not None}
+    cloud = sorted((s for s in rates if facts.kind(s) == "cloud" and rates[s] >= 0.40), key=lambda s: -rates[s])
+    local = sorted((s for s in rates if facts.kind(s) == "local"), key=lambda s: -rates[s])
+    require(len(cloud) >= 2, "several cloud systems pass 40% or more of the hard items")
+    require(len(local) == facts.count_systems("local"), "every local system has a hard-cases score")
+    require(rates[local[0]] < 0.10, "every local system passes fewer than 10% of the hard items")
+    all_items = [facts.hard_block(s)["our_directions"]["pass_rate"] for s in local]
+    require(max(all_items) < 0.10, "every local system passes fewer than 10% of all the hard items too")
+    require(rates[REFERENCE] < 0.10, "DeepL API passes fewer than 10% of the hard items")
+    n, nm = hard_items(facts), facts.name
+    lo, hi = pct1(rates[cloud[-1]]), pct1(rates[cloud[0]])
     if lang == "en":
-        return (f"**{n['within-8-gib']} comes within {d8} COMET-22 of the best local model on about a third of the "
-                f"memory.** It scores {c4(eight['score'])} at a peak of {eight['memory']:.2f} GiB, against "
-                f"{c4(top['score'])} at {top['memory']:.2f} GiB for {n['any-memory']}. Under 4 GiB, "
-                f"{n['within-4-gib']} scores {c4(four['score'])} at {four['memory']:.2f} GiB "
-                f"([figure](figures/quality-memory.svg)).")
-    return (f"**{n['within-8-gib']}は、約3分の1のメモリでローカル首位とCOMET-22が{d8}差。** "
-            f"ピーク{eight['memory']:.2f} GiBで{c4(eight['score'])}。首位の{n['any-memory']}は"
-            f"{top['memory']:.2f} GiBで{c4(top['score'])}。4 GiB以内では{n['within-4-gib']}が"
-            f"{four['memory']:.2f} GiBで{c4(four['score'])}（[図](figures/quality-memory.svg)）。")
+        return (f"**On hard cases, the gap is wide.** {words(len(cloud)).capitalize()} cloud systems pass 40% or more "
+                f"of the {n} hard items ({lo} to {hi}). Every one of the {len(local)} local systems passes fewer than "
+                f"10%, counted on all {n} items or only on those in the directions it covers; the best, "
+                f"{nm(local[0])}, passes {pct1(rates[local[0]])}. {nm(REFERENCE)} passes "
+                f"{pct1(rates[REFERENCE])}.")
+    return (f"**難しい例では差が大きい。** "
+            f"{n}件の難しい例で、クラウドの{len(cloud)}構成が40%以上（{lo}〜{hi}）に合格した。"
+            f"ローカルは{len(local)}構成すべてが、{n}件全体で数えても対応する方向の項目だけで数えても10%未満で、"
+            f"最も高い{nm(local[0])}でも{pct1(rates[local[0]])}。"
+            f"{nm(REFERENCE)}は{pct1(rates[REFERENCE])}。")
 
 
-def finding_moe(facts, lang):
-    moe, dense = "hy-mt2-30b-a3b", "hy-mt2-7b"
-    require(facts.systems[moe]["mixture_of_experts"], "Hy-MT2 30B-A3B is a mixture-of-experts model")
-    require(not facts.systems[dense].get("mixture_of_experts"), "Hy-MT2 7B is a dense model")
-    s = {k: (facts.seconds(moe, k), facts.seconds(dense, k)) for k in schema.TYPES}
-    require(all(1.8 <= b / a <= 2.2 for a, b in s.values()),
-            "the mixture-of-experts model is about twice as fast per sentence and per passage")
-    ratio = facts.memory(moe) / facts.memory(dense)
-    total = facts.systems[moe]["parameters"] / 1e9
-    n = {x: facts.name(x) for x in (moe, dense)}
-    sent = s["sentence"]
+def finding_local_vs_reference(facts, lang):
+    """The top local system by Overall against DeepL API, pillar by pillar."""
+    g, d = facts.ranked_overall("local")[0], REFERENCE
+    require(facts.overall(g) > facts.overall(d), "the top local system is ahead of DeepL API on Overall")
+    ef = {s: facts.judge.error_free(s)["error_free"] for s in (g, d)}
+    require(facts.comet(g) < facts.comet(d), "the top local system's COMET-22 is below DeepL API's")
+    require(ef[g] > ef[d] and facts.hard(g) > facts.hard(d),
+            "the top local system has more error-free translations and passes more hard cases than DeepL API")
+    nm = facts.name
+    pairs = dict(o=(o1(facts.overall(g)), o1(facts.overall(d))), c=(c4(facts.comet(g)), c4(facts.comet(d))),
+                 e=(pct1(ef[g]), pct1(ef[d])), h=(pct1(facts.hard(g)), pct1(facts.hard(d))))
     if lang == "en":
-        return (f"**The {total:.0f}B mixture-of-experts model is about twice as fast as the 7B dense model.** "
-                f"{n[moe]} activates about 3B of its {total:.0f}B parameters per token. It translates a sentence in "
-                f"{sent[0]:.2f} s, against {sent[1]:.2f} s for {n[dense]}, and uses {ratio:.1f} times the memory.")
-    return (f"**{total:.0f}BのMixture-of-Expertsモデルは、MoEではない7Bのモデルより約2倍速い。** "
-            f"{n[moe]}が1トークンあたりに使うのは、{total:.0f}Bのパラメータのうち約3B。"
-            f"1文の翻訳は{sent[0]:.2f}秒で、{n[dense]}は{sent[1]:.2f}秒。メモリは{ratio:.1f}倍使う。")
+        v = {k: f"{a} against {b}" for k, (a, b) in pairs.items()}
+        return (f"**The top local system on Overall, {nm(g)}, is ahead of {nm(d)}** ({v['o']}). Its COMET-22 is lower "
+                f"({v['c']}), but more of its translations are error-free ({v['e']}) and it passes more hard cases "
+                f"({v['h']}).")
+    v = {k: f"{a}対{b}" for k, (a, b) in pairs.items()}
+    return (f"**総合スコアでローカル首位の{nm(g)}は、{nm(d)}を上回る**（{v['o']}）。COMET-22は低い（{v['c']}）が、"
+            f"誤りのない訳の割合（{v['e']}）と難しい例の合格率（{v['h']}）で上回る。")
 
 
 def findings(facts, lang):
-    parts = [finding_small_models, finding_measures, finding_memory, finding_moe]
+    parts = [finding_standard, finding_hard, finding_local_vs_reference]
     body = "\n".join(f"{i}. {fn(facts, lang)}" for i, fn in enumerate(parts, 1))
-    note = ("\"Ties\" means the paired 95% interval of the difference includes zero "
-            "([Reading the metrics](docs/metrics.md)). Results by direction are on the "
-            "[leaderboard](https://takechanman1228.github.io/translate-bench/)." if lang == "en" else
-            "「同等」は、差の対応のある95%区間がゼロを含むことを指します（[指標の読み方](docs/metrics.md)）。"
-            "方向別の結果は[リーダーボード](https://takechanman1228.github.io/translate-bench/)にあります。")
+    note = (f"The pillars are defined under [Overall score]({ANCHOR['en']}). Results by direction are on the "
+            f"[leaderboard]({LEADERBOARD})." if lang == "en" else
+            f"3つの柱の定義は[総合スコア]({ANCHOR['ja']})にあります。方向別の結果は[リーダーボード]({LEADERBOARD})に"
+            f"あります。")
     return body + "\n\n" + note
 
 
-def lead_caption(facts, lang):
-    n = len(facts.ranked())
-    ref = facts.name(REFERENCE)
+def second_verifier(facts):
+    """(systems, agreement, items, largest gap in points, swapped pairs with their gap in items)."""
+    second = facts.second
+    primary, other = second["primary"], second["verifier"]["model"]
+    systems = second["systems"]
+    rate = {v: {s: e["passed"][v] / e["items"] for s, e in systems.items()} for v in (primary, other)}
+    gap = max(100 * abs(rate[other][s] - rate[primary][s]) for s in systems)
+    swaps = [abs(systems[a]["passed"][other] - systems[b]["passed"][other]) for a in systems for b in systems
+             if a < b and (rate[primary][a] - rate[primary][b]) * (rate[other][a] - rate[other][b]) < 0]
+    total = second["total"]
+    return list(systems), total["agreed"] / total["items"], total["items"], gap, swaps
+
+
+def coverage_shifts(facts):
+    """How far COMET-22 x 100 of the systems with all 18 directions moves when only the directions of a partly
+    covered system count: {coverage set: (systems, directions, mean shift, largest absolute shift)}."""
+    from translate_bench import aggregate
+
+    full = facts.ranked()
+    out = {}
+    for sid in facts.systems:
+        if facts.full(sid) or facts.comet(sid, "overall_measured") is None:
+            continue
+        dirs = tuple(facts.release.tables[sid].directions())
+        if dirs in {d for _, d, _, _ in out.values()}:
+            out[next(k for k, v in out.items() if v[1] == dirs)][0].append(sid)
+            continue
+        shifts = [100 * (aggregate.score(facts.release.tables[f], "overall", list(dirs)) - facts.comet(f))
+                  for f in full]
+        out[sid] = ([sid], dirs, mean(shifts), max(map(abs, shifts)))
+    return out
+
+
+def group_name(facts, members, lang):
+    """Several systems in a few words: "PLaMo 3 Translate 31B, 8B, 2B and 0.8B" for the sizes of one family."""
+    from translate_bench.export.figures import SHORT_NAMES
+
+    entries = [facts.systems[s] for s in members]
+    joiner = (" and ", ", ") if lang == "en" else ("、", "、")
+    if len(entries) > 1 and len({e["family"] for e in entries}) == 1 and all(e.get("size_label") for e in entries):
+        sizes = [e["size_label"] for e in entries]
+        listed = sizes[0] if len(sizes) == 1 else joiner[1].join(sizes[:-1]) + joiner[0] + sizes[-1]
+        return f"{entries[0]['family']} {listed}"
+    names = [SHORT_NAMES.get(e["name"], e["name"]).replace(",", "").split() for e in entries]
+    common = []
+    for parts in zip(*names):
+        if len(set(parts)) > 1:
+            break
+        common.append(parts[0])
+    if len(entries) > 1 and len(common) >= 2:
+        label = " ".join(common)
+        return (f"both {label} configurations" if len(entries) == 2 else f"the {words(len(entries))} {label} "
+                "configurations") if lang == "en" else f"{label}の{len(entries)}構成"
+    names = [" ".join(n) for n in names]
+    return names[0] if len(names) == 1 else joiner[1].join(names[:-1]) + joiner[0] + names[-1]
+
+
+def language_list(codes, lang):
+    names = [schema.LANGUAGE_NAMES[c] for c in codes]
     if lang == "en":
-        return (f"*The {n} systems that cover all 18 directions, sorted by COMET-22 (blue: local, orange: cloud). "
-                f"Left to right: COMET-22 (higher is better), MetricX-24 (lower is better), and the share of "
-                f"non-tied items where the LLM judge preferred the system to {ref}.*")
-    return (f"*18方向すべてに対応した{n}構成を、COMET-22の順に並べた（青：ローカル、橙：クラウド）。左から、COMET-22"
-            f"（高いほど良い）、MetricX-24（低いほど良い）、LLMによる判定で{ref}より良いとされた割合（引き分けを除く）。*")
+        return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+    ja = {"ja": "日本語", "zh-Hans": "中国語（簡体字）", "es": "スペイン語", "ko": "韓国語", "fr": "フランス語",
+          "de": "ドイツ語", "pt-BR": "ポルトガル語（ブラジル）", "ar": "アラビア語", "id": "インドネシア語"}
+    return "と".join(ja[c] for c in codes)
+
+
+def overall_section(facts, lang):
+    """The definition of the Overall score, its coverage rule, the LTB credit and the caveats."""
+    data = facts.overall_data
+    counts, rule = data["counts"], data["min_directions"]
+    k, total = counts["overall"], counts["systems"]
+    n, dirs = hard_items(facts), len(schema.DIRECTIONS)
+    judge, verifier = facts.name(facts.judge.model), facts.hard_summary["verifier"]["name"]
+    upstream = facts.hard_summary["verifier"]["upstream_name"]
+    checked, agree, items, gap, swaps = second_verifier(facts)
+    top = facts.ranked_overall()[:len(checked)]
+    require(set(checked) == set(top) and all(facts.kind(s) == "cloud" for s in top),
+            "the second verifier re-ran the systems with the highest Overall score, all cloud")
+    require(facts.second["verifier"]["name"] == upstream, "the second verifier is the model LTB's leaderboard uses")
+    require(len(swaps) <= 1, "the two verifiers order the re-run systems the same, but for one pair at most")
+    second = facts.second["verifier"]["name"]
+    partial = [s for s in facts.ranked_overall() if facts.coverage(s) < dirs]
+    without = [s for s in facts.systems if facts.overall(s) is None]
+    shifts = coverage_shifts(facts)
+    kept = {k_: v for k_, v in shifts.items() if facts.overall(k_) is not None}
+    dropped = {k_: v for k_, v in shifts.items() if facts.overall(k_) is None and v[1]}
+    small = max(v[3] for v in kept.values())
+    require(small < 0.5, "dropping a scored partial system's missing directions moves COMET-22 x 100 under 0.5")
+    require(all(v[2] > 4 * small for v in dropped.values()), "the excluded coverage moves COMET-22 far more")
+    sizes = sorted({len(v[1]) for v in kept.values()}, reverse=True)
+    nm = facts.name
+    families = {}
+    for s in [x for x in facts.systems if x in partial]:  # registry order within a group
+        families.setdefault(tuple(data["systems"][s]["missing_languages"]), []).append(s)
+    if lang == "en":
+        apart = "" if not swaps else f"{words(swaps[0])} item{'s' if swaps[0] > 1 else ''} apart"
+        order = "the order stayed the same" + (f" except for two systems {apart}" if swaps else "")
+        groups = "; ".join(f"{group_name(facts, members, 'en')} without {language_list(list(m), 'en')} "
+                           f"({facts.coverage(members[0])}/{dirs})" for m, members in families.items())
+        why = []
+        for s in without:
+            c = data["systems"][s]["directions"]["standard"]
+            why.append(f"{nm(s)} ({c} directions with both text types)" if c else
+                       f"{nm(s)} (no direction with both text types)")
+        means = [v[2] for v in kept.values()]
+        dropped_text = " and ".join(f"{nm(v[0][0])}'s {len(v[1])} directions" for v in dropped.values())
+        return "\n".join([
+            "The Overall score is the mean of three pillars, each on a 0–100 scale and weighted equally, rounded to "
+            "one decimal:",
+            "",
+            f"- **Standard:** COMET-22 over the directions the system covers (all {dirs} for most), times 100.",
+            f"- **Reliability:** the share of the LLM judge's sample in which {judge} marked no error, in percent.",
+            f"- **Hard cases:** the pass rate on the {n} items of the [Last Translation Benchmark]({LTB_URL}) (LTB; "
+            f"Zouhar et al., 2026, [arXiv:2609.04173]({LTB_PAPER}); data CC BY 4.0) whose direction is one of this "
+            f"benchmark's, in percent. An item passes when the translation meets all of its handwritten rules, as "
+            f"checked by {verifier}. These are not official LTB leaderboard numbers: they use a {n}-item subset in "
+            f"this benchmark's directions and a different verifier ([protocol](results/ltb-v1/protocol.md)).",
+            "",
+            f"A system gets an Overall score when every pillar covers at least {rule} of the {dirs} directions: "
+            f"{k} of the {total}. {words(counts['partial']).capitalize()} of them cover fewer than {dirs}: {groups}. "
+            f"For these, each pillar is a mean over the directions the system covers, and the hard cases count only "
+            f"the items in those directions. The leaderboard marks them with their coverage. "
+            f"{' and '.join(why)} get no Overall score.",
+            "",
+            f"A mean over fewer directions is not the same test. Among the {len(facts.ranked())} systems with all "
+            f"{dirs} directions, keeping only the {' or '.join(map(str, sizes))} directions of a system above moves "
+            f"COMET-22 × 100 by at most {small:.2f} points (mean shift {signed(min(means))} to {signed(max(means))}); "
+            f"keeping only {dropped_text} moves it by {max(v[2] for v in dropped.values()):.1f} points on average, "
+            "which is why that system gets no Overall score. "
+            "MetricX-24 stays a separate column and is not part of the Overall score, which has no interval. "
+            "[`results/v1.1/overall.json`](results/v1.1/overall.json) holds every system's pillars and coverage, and "
+            "`translate-bench verify` recomputes it.",
+            "",
+            f"**Caveats.** The LLM judge is {judge} and the hard-case verifier is {verifier}. The hard-case verdicts "
+            f"of the {words(len(checked))} systems with the highest Overall score, all cloud, were re-run with "
+            f"{second}, the verifier LTB uses: the two agreed on {100 * agree:.1f}% of {items:,} items, the pass rates "
+            f"moved by at most {gap:.1f} points, and {order}. The judge pillar has no such second verifier.",
+        ])
+    order = ("順位も同じ" if not swaps else f"順位は{swaps[0]}件差の2構成が入れ替わったほかは同じ")
+    groups = "、".join(f"{group_name(facts, members, 'ja')}（{language_list(list(m), 'ja')}なし、"
+                       f"{facts.coverage(members[0])}/{dirs}）" for m, members in families.items())
+    why = "と".join(f"{nm(s)}（文と文章の両方がそろう方向が{data['systems'][s]['directions']['standard']}）"
+                    if data["systems"][s]["directions"]["standard"] else f"{nm(s)}（文と文章の両方がそろう方向がない）"
+                    for s in without)
+    means = [v[2] for v in kept.values()]
+    dropped_text = "、".join(f"{nm(v[0][0])}の{len(v[1])}方向だけにすると平均{v[2]:.1f}ポイント"
+                             for v in dropped.values())
+    return "\n".join([
+        "総合スコアは、0〜100に揃えた3つの柱を同じ重みで平均し、小数第1位に丸めたものです。",
+        "",
+        f"- **標準：** その構成が対応する方向（ほとんどは{dirs}方向すべて）のCOMET-22を100倍した値。",
+        f"- **信頼性：** LLMによる判定の標本のうち、{judge}が誤りを1つも付けなかった訳の割合（%）。",
+        f"- **難しい例：** [Last Translation Benchmark]({LTB_URL})（LTB。Zouhar et al., 2026、"
+        f"[arXiv:2609.04173]({LTB_PAPER})、データはCC BY 4.0）のうち、"
+        f"方向がこのベンチマークと重なる{n}件の合格率（%）。"
+        f"訳文が手書きの規則をすべて満たすと合格で、判定は{verifier}が行う。LTBの公式リーダーボードの数値ではない。"
+        f"このベンチマークの方向にある{n}件だけを使い、判定するモデルも異なる（[プロトコル](results/ltb-v1/protocol.md)）。",
+        "",
+        f"総合スコアは、3つの柱のどれもが{dirs}方向のうち{rule}方向以上に対応する構成に付けます（{total}構成中{k}構成）。"
+        f"うち{counts['partial']}構成は{dirs}方向に満たない：{groups}。これらの柱は対応する方向だけの平均で、"
+        "難しい例もその方向の項目だけで数えます。リーダーボードでは対応する方向の数を添えて示します。"
+        f"{why}には総合スコアがありません。",
+        "",
+        f"方向が少ない平均は、同じ試験ではありません。{dirs}方向すべてに対応した{len(facts.ranked())}構成で、"
+        f"上の構成と同じ{'・'.join(map(str, sizes))}方向だけに絞ると、COMET-22×100は最大{small:.2f}ポイント"
+        f"（平均で{signed(min(means))}〜{signed(max(means))}）動きます。"
+        f"{dropped_text}動くため、その構成には総合スコアを付けません。"
+        "MetricX-24は別の列として示し、総合スコアには含めません。総合スコアに区間はありません。各構成の柱の値と対応する方向の数は"
+        "[`results/v1.1/overall.json`](results/v1.1/overall.json) にあり、`translate-bench verify` が計算し直します。",
+        "",
+        f"**注意点：** LLMによる判定は{judge}、難しい例の判定は{verifier}が行っています。"
+        f"総合スコア上位{len(checked)}構成"
+        f"（すべてクラウド）の難しい例は、LTBが使う{second}でも判定し直しました。{items:,}件のうち{100 * agree:.1f}%で"
+        f"判定が一致し、合格率の差は{gap:.1f}ポイント以内、{order}でした。LLMによる判定の柱には、このような2つ目の判定はありません。",
+    ])
+
+
+def lead_caption(facts, lang):
+    """The lead figure with its alt text and caption: the Overall score and its three pillars."""
+    k, n, dirs = len(facts.ranked_overall()), hard_items(facts), len(schema.DIRECTIONS)
+    if lang == "en":
+        return (f"![The Overall score and its three pillars for the {k} systems with an Overall score]"
+                f"(figures/lead.svg)\n\n*The {k} systems with an Overall score, sorted by it (blue: local, orange: "
+                f"cloud). Left to right, on one 0–100 scale: the Overall score, then its three pillars: "
+                f"COMET-22 × 100, the share of error-free translations, and the pass rate on the {n} hard cases. "
+                f"A system below {dirs} directions carries its coverage, such as (16/{dirs}), and is scored over the "
+                f"directions it covers.*")
+    return (f"![総合スコアを持つ{k}構成の、総合スコアと3つの柱](figures/lead.svg)\n\n"
+            f"*総合スコアを持つ{k}構成を、その順に並べた（青：ローカル、橙：クラウド）。左から、同じ0〜100の目盛りで、"
+            f"総合スコア、その3つの柱であるCOMET-22×100、誤りのない訳の割合、難しい例{n}件の合格率。"
+            f"{dirs}方向に満たない構成には（16/{dirs}）のように対応する方向の数を添え、その方向だけで計算した。*")
 
 
 def metrics_table(facts, lang):
@@ -261,23 +422,33 @@ def metrics_table(facts, lang):
 
     judge = facts.judge
     judge_name = facts.name(judge.model)
+    verifier = facts.hard_summary["verifier"]["name"]
+    n = hard_items(facts)
     vs = lambda s: (judge.versus_reference(s) or {}).get("preferred")  # noqa: E731
     ef = lambda s: (judge.error_free(s) or {}).get("error_free") if s != REFERENCE else None  # noqa: E731
     done = lambda s: facts.block(s)["completion"]["rate"]  # noqa: E731
-    roles = (["Learned metric that compares the output with a reference translation",
+    roles = ([f"Mean of COMET-22 × 100, error-free % and hard-case pass % ([Overall score]({ANCHOR['en']}))",
+              "Learned metric that compares the output with a reference translation",
               "A second learned metric of the same kind, as an error score",
               f"Share of non-tied items where the LLM judge ({judge_name}) preferred the system to DeepL API",
               "Share of items where the LLM judge marked no error",
+              f"Share of {n} hard items (Last Translation Benchmark) that meet all their handwritten rules, checked by "
+              f"{verifier}",
               "Character and word overlap with the reference",
               "Share of attempted items that received a score"] if en else
-             ["訳文を参照訳と比べる学習済みの指標", "同じ種類のもう1つの学習済み指標（誤りの大きさを表す）",
+             [f"COMET-22×100、誤りなしの割合、難しい例の合格率の平均（[総合スコア]({ANCHOR['ja']})）",
+              "訳文を参照訳と比べる学習済みの指標", "同じ種類のもう1つの学習済み指標（誤りの大きさを表す）",
               f"LLMによる判定（{judge_name}）でDeepL APIより良いとされた割合（引き分けを除く）",
               "LLMによる判定で誤りが1つも付かなかった訳の割合",
+              f"難しい例{n}件（Last Translation Benchmark）のうち、手書きの規則をすべて満たした割合"
+              f"（{verifier}が判定）",
               "参照訳との文字・単語の重なり", "依頼した項目のうち、スコアが付いた項目の割合"])
-    names = [("COMET-22 ↑", lambda s: facts.comet(s), False, c4),
+    names = [("Overall ↑" if en else "総合 ↑", facts.overall, False, o1),
+             ("COMET-22 ↑", lambda s: facts.comet(s), False, c4),
              ("MetricX-24 ↓", lambda s: facts.metricx(s), True, lambda x: f"{x:.3f}"),
              ("Judge vs DeepL API ↑" if en else "判定（対DeepL API）↑", vs, False, pct),
              ("Error-free ↑" if en else "誤りなし ↑", ef, False, pct),
+             ("Hard cases ↑" if en else "難しい例 ↑", facts.hard, False, pct1),
              ("chrF++ ↑", lambda s: facts.chrf(s), False, lambda x: f"{x:.2f}")]
     rows = []
     for (name, value, low, fmt), role in zip(names, roles):
@@ -292,7 +463,7 @@ def metrics_table(facts, lang):
         low = 100 * min(map(done, pool))
         cells.append(f"{complete} of {len(pool)} at 100% (lowest {low:.1f}%)" if en else
                      f"{len(pool)}構成中{complete}構成が100%（最低{low:.1f}%）")
-    rows.append(f"| {'Completion ↑' if en else '完了率 ↑'} | {roles[5]} | {cells[0]} | {cells[1]} |")
+    rows.append(f"| {'Completion ↑' if en else '完了率 ↑'} | {roles[-1]} | {cells[0]} | {cells[1]} |")
     if en:
         head = "| Metric | What it measures | Best local | Best cloud |\n| --- | --- | --- | --- |"
         note = (f"Best among the {len(full)} systems that cover all 18 directions ({len(local)} local, {len(cloud)} "
@@ -308,8 +479,15 @@ def more_captions(facts, lang):
     local_mem = [s for s in facts.ranked("local") if facts.memory(s) is not None]
     full = facts.ranked()
     top = facts.name(facts.ranked("cloud")[0])
+    systems, n = len(facts.hard_summary["systems"]), hard_items(facts)
+    verifier = facts.hard_summary["verifier"]["name"]
     if lang == "en":
         return "\n\n".join([
+            f"![Pass rate on the {n} hard cases for all {systems} systems](figures/hard-cases.svg)",
+            f"*Pass rate on the {n} hard cases from the Last Translation Benchmark for all {systems} systems, with "
+            f"its 95% interval over items (blue: local, orange: cloud). {verifier} checks the rules. A system below "
+            f"18 directions carries its coverage, such as (16/18), and is scored on the items in the directions it "
+            f"covers.*",
             f"![COMET-22 by total parameters for {nfam} local model families](figures/size-quality.svg)",
             f"*COMET-22 by total parameter count (log scale) for the {nfam} local families measured at more than one "
             f"size. Hollow points (PLaMo 3 Translate) average 16 directions, because it has no Brazilian Portuguese. "
@@ -323,6 +501,10 @@ def more_captions(facts, lang):
             f"axis is reversed, so up and right are both better.*",
         ])
     return "\n\n".join([
+        f"![全{systems}構成の、難しい例{n}件の合格率](figures/hard-cases.svg)",
+        f"*全{systems}構成の、Last Translation Benchmarkの難しい例{n}件の合格率と、項目についての95%区間"
+        f"（青：ローカル、橙：クラウド）。規則の判定は{verifier}が行う。18方向に満たない構成には（16/18）のように"
+        f"対応する方向の数を添え、その方向の項目だけで計算した。*",
         f"![ローカルモデル{nfam}系列の総パラメータ数とCOMET-22](figures/size-quality.svg)",
         f"*複数のサイズを測ったローカル{nfam}系列の、総パラメータ数（対数軸）とCOMET-22。"
         f"白抜きの点（PLaMo 3 Translate）は、ポルトガル語（ブラジル）に対応しないため16方向の平均。"
@@ -336,8 +518,8 @@ def more_captions(facts, lang):
     ])
 
 
-README_BLOCKS = {"counts": counts, "top": top_table, "findings": findings, "lead-caption": lead_caption,
-                 "metrics": metrics_table, "figures": more_captions}
+README_BLOCKS = {"counts": counts, "top": top_table, "findings": findings, "overall": overall_section,
+                 "lead-caption": lead_caption, "metrics": metrics_table, "figures": more_captions}
 
 
 # Files ----------------------------------------------------------------------------------------------------
@@ -395,6 +577,7 @@ def correlations(facts):
         ("chrF++", [facts.chrf(s) for s in full]),
         (f"Judge vs {ref}", [None if s == REFERENCE else judge.versus_reference(s)["preferred"] for s in full]),
         ("Error-free", [(judge.error_free(s) or {}).get("error_free") for s in full]),
+        *([("Hard cases", [facts.hard(s) for s in full])] if facts.hard_summary else []),
     ]
     head = "| | " + " | ".join(name for name, _ in measures) + " |"
     lines = [head, "| --- |" + " ---: |" * len(measures)]

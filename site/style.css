@@ -150,6 +150,8 @@ th .caret { color: var(--accent); font-size: .62rem; }
 tbody tr:hover td, tbody tr:hover th { background: var(--hover); }
 td.sys, th.sys { position: sticky; left: 0; background: var(--bg); z-index: 1; }
 thead th.sys { z-index: 3; }
+/* A long system name (Apple's on-device models) wraps instead of pushing the last columns out of view. */
+table.board td.sys { white-space: normal; max-width: 22rem; line-height: 1.3; }
 .sys a { color: var(--text); text-decoration: none; font-weight: 600; }
 .sys a:hover { text-decoration: underline; }
 td .kind a, td .named a { color: var(--text); text-decoration: none; }
@@ -179,6 +181,9 @@ td .nn { color: var(--muted); font-size: .76rem; margin-left: .25rem; }
 td .mark { color: var(--tie); font-weight: 700; margin-right: .3em; }
 td .star { position: absolute; margin-left: 1px; color: var(--muted); }
 td.partial { color: var(--text-2); }
+/* Coverage badge: "16/18" next to a system that covers fewer directions; its scores are means over them. */
+.cov { display: inline-block; margin-left: .4em; padding: 0 .35em; border: 1px solid var(--rule); border-radius: 4px; color: var(--text-2); font-size: .7rem; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.45; vertical-align: .1em; white-space: nowrap; }
+.legend-line .cov { margin-left: 0; margin-right: .3em; }
 td.na { color: var(--muted); }
 td.muted-cell { color: var(--muted); }
 tr.partial-row td.sys a { font-weight: 500; }
@@ -269,6 +274,13 @@ table.heat tbody tr:hover td.h { background-image: linear-gradient(rgba(0, 0, 0,
 .tile:first-child { border-left: 0; padding-left: 0; }
 /* Leaderboard picks: label, name, one line of numbers; each opens the system's page. */
 .tiles.picks { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: -.55rem 0 .8rem; border-top: 0; }
+/* System page: the Overall score and its three pillars in the first row, the other figures below (wide screens;
+   a phone shows two per row like every tile row). */
+@media (min-width: 641px) {
+  .tiles.sys { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .tiles.sys .tile:nth-child(4n+1) { border-left: 0; padding-left: 0; }
+  .tiles.sys .tile:nth-child(-n+4) { border-bottom: 1px solid var(--grid); }
+}
 .tiles.picks .tile { display: block; color: inherit; text-decoration: none; }
 .t-name { font-size: 1.02rem; font-weight: 650; line-height: 1.3; margin: .15rem 0 .1rem; min-width: 0; }
 .t-name .named { display: flex; max-width: 100%; }
@@ -323,6 +335,10 @@ footer a { color: var(--text-2); }
   table.board td.sys .named { align-items: flex-start; gap: .4rem; }
   table.board td.sys .mark-logo { margin-top: .1em; }
   table.board td.sys a { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  /* The coverage badge goes on its own line under the name, so the name keeps its two lines. */
+  table.board td.sys .named { flex-wrap: wrap; row-gap: .2rem; }
+  table.board td.sys .named a { flex: 1 1 calc(100% - 2rem); min-width: 0; }
+  table.board td.sys .cov { order: 3; margin-left: 1.55rem; }
   td.rank, th.rank { width: auto; padding-left: .5rem; padding-right: .3rem; }
   .toolbar .field { flex-wrap: wrap; row-gap: .25rem; }
   .pickers { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .5rem .7rem; }
@@ -340,7 +356,7 @@ footer a { color: var(--text-2); }
   .t-name .mark-logo { margin-top: .15em; }
   .t-name .nm { white-space: normal; }
   .tiles.picks .t-sub { font-size: .74rem; }
-  /* COMET-22 on its own line, memory and speed below. */
+  /* The score on its own line, memory and speed below. */
   .t-sub .fig:first-child { display: block; }
   .t-sub .fig:first-child + .dot { display: none; }
   dl.meta { grid-template-columns: minmax(0, 1fr); gap: 0 0; }

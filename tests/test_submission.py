@@ -172,8 +172,8 @@ class PipelineTest(unittest.TestCase):
             schema.write_json(folder / "run.json", record)
             leaked = submission.validate(root, folder)[0]
         self.assertEqual(facts["rows"], 440)
-        self.assertEqual(problems, ["system.json: no COMET-22 scores; the release ranks by COMET-22 (score with "
-                                    "--metrics chrf,comet22,metricx24)"])
+        self.assertEqual(problems, ["system.json: no COMET-22 scores; the release ranks every selection by COMET-22 "
+                                    "(score with --metrics chrf,comet22,metricx24)"])
         self.assertTrue(any("run.json names a local or private address" in p for p in leaked))
 
 

@@ -1,10 +1,12 @@
 /* Translate Bench leaderboard and dashboard.
  *
  * Everything is computed here from window.TB_DATA (data.js), written by
- * translate_bench/export/site_data.py from results/v1/. Scores of a selection use the release's
- * aggregation: in each direction the mean of the selected text types (sentences and passages 50:50),
- * then the mean over directions. Paired 95% intervals use the release's paired document bootstrap
- * (the same 2,000 document draws as `translate-bench verify`), computed in the browser.
+ * translate_bench/export/site_data.py from results/v1/, results/ltb-v1/ and results/v1.1/. Scores of a
+ * selection use the release's aggregation: in each direction the mean of the selected text types
+ * (sentences and passages 50:50), then the mean over directions. Paired 95% intervals use the release's
+ * paired document bootstrap (the same 2,000 document draws as `translate-bench verify`), computed in the
+ * browser. The Overall score and the hard-cases pass rate are one published figure per system each
+ * (all 18 directions; the hard-case items in the release's directions) and do not follow the filters.
  */
 "use strict";
 (function () {
@@ -20,7 +22,9 @@
   const VIEWS = ["leaderboard", "languages", "tradeoffs", "compare", "metrics", "system"];
   const TITLES = { leaderboard: "", languages: "Languages", tradeoffs: "Speed & memory", compare: "Compare", metrics: "Metric agreement" };
   const TK = { sentence: "s", passage: "p" };
-  const TYPE_NAME = { overall: "Overall (50:50)", sentence: "Sentences", passage: "Passages" };
+  // The text-type selection "overall" (sentences and passages 50:50) is shown as "Both types", so it is not read as
+  // the Overall score.
+  const TYPE_NAME = { overall: "Both types (50:50)", sentence: "Sentences", passage: "Passages" };
   const LANG = Object.fromEntries(D.languages.map((l) => [l.code, l.name]));
   LANG.en = "English";
   const SYS = D.systems;
@@ -135,11 +139,16 @@
   // State in the URL hash: #view?key=value&...
 
   const DEFAULT = {
-    kind: "all", lang: "all", dir: "both", type: "overall", mem: "any", partial: "0",
-    sort: "comet", order: "", cols: "comet,mx,judge,ef,ss,mem", sys: "hy-mt2-30b-a3b,gpt-6.1-terra,deepl-api", metric: "comet",
+    kind: "all", lang: "all", dir: "both", type: "overall", mem: "any", full: "0",
+    sort: "overall", order: "", cols: "overall,comet,mx,judge,ef,hard,ss,mem", sys: "hy-mt2-30b-a3b,gpt-6.1-terra,deepl-api", metric: "comet",
     by: "pair", id: "",
   };
-  const FILTER_KEYS = ["kind", "lang", "dir", "type", "mem", "partial"];
+  // On a phone the default columns leave out MetricX-24 and the judge; the Columns menu still has them.
+  const NARROW_COLS = "overall,comet,ef,hard,ss,mem";
+  const colsShown = () => (st.cols === DEFAULT.cols && NARROW() ? NARROW_COLS : st.cols);
+  // `full` hides the systems that do not cover every selected direction. Before v1.1 they were hidden unless
+  // `partial=1`; that key is now ignored, since every system is shown by default.
+  const FILTER_KEYS = ["kind", "lang", "dir", "type", "mem", "full"];
   let view = "leaderboard";
   let st = { ...DEFAULT };
   // A section to scroll to after the next render (from the old #sizes).
@@ -164,7 +173,7 @@
     if (!["both", "out", "into"].includes(st.dir)) st.dir = "both";
     if (!["overall", "sentence", "passage"].includes(st.type)) st.type = "overall";
     if (!["pair", "direction"].includes(st.by)) st.by = "pair";
-    if (st.sort !== "name" && !COLUMNS.some((c) => c.key === st.sort)) st.sort = "comet";
+    if (st.sort !== "name" && !COLUMNS.some((c) => c.key === st.sort)) st.sort = COLUMNS.some((c) => c.key === DEFAULT.sort) ? DEFAULT.sort : "comet";
     scrollTarget = v === "sizes" ? "sizes" : null;
     if (v === "sizes") history.replaceState(null, "", hashFor("tradeoffs"));
     return true;
@@ -281,6 +290,8 @@
         chrf: measure(sys.id, sc, 1).value, done: attempted ? scored / attempted : null,
         judge: j.vs ? j.vs.preferred : null, judgeE: j.vs, ef: j.ef ? j.ef.value : null, efE: j.ef, ss: ss.v, ssRef: ss.ref, sp: sp.v, spRef: sp.ref,
         mem: sys.kind === "local" ? sys.memory : null, dl: gib(sys.download),
+        hard: sys.ltb ? sys.ltb.rate : null, hardE: sys.ltb,
+        overall: sys.overall && isNum(sys.overall.overall) ? sys.overall.overall : null, overallE: sys.overall,
       };
     });
   }
@@ -288,7 +299,8 @@
   function passes(r, s) {
     if (s.kind !== "all" && r.sys.kind !== s.kind) return false;
     if (s.mem !== "any" && (r.sys.kind !== "local" || !isNum(r.mem) || r.mem > +s.mem)) return false;
-    return r.cover > 0;
+    // Over all directions every system is listed, also one without a complete direction (it has other figures).
+    return r.cover > 0 || (s.lang === "all" && s.dir === "both");
   }
 
   // ---------------------------------------------------------------------------------------------
@@ -451,12 +463,13 @@
   const kindSeg = () => seg("Systems", "kind", [["all", "All"], ["local", "Local"], ["cloud", "Cloud"]]);
   const langSelect = () => select("Language", "lang", langOptions());
   const dirSeg = (shown) => seg("Direction", "dir", [["both", "Both ways"], ["out", "From English"], ["into", "Into English"]], shown);
-  const typeSeg = (shown) => seg("Text type", "type", [["overall", "Overall"], ["sentence", "Sentences"], ["passage", "Passages"]], shown);
+  const typeSeg = (shown) => seg("Text type", "type", [["overall", "Both types"], ["sentence", "Sentences"], ["passage", "Passages"]], shown);
   const memSelect = () => select("Peak memory", "mem", [["any", "Any memory"], ["4", "≤ 4 GiB"], ["8", "≤ 8 GiB"], ["16", "≤ 16 GiB"], ["24", "≤ 24 GiB"]]);
-  function partialCheck(count) {
+  function fullCheck(count) {
     return h("label", { class: "check" }, h("input", {
-      type: "checkbox", checked: st.partial === "1", "data-k": "chk-partial", onchange: (e) => update({ partial: e.target.checked ? "1" : "0" }),
-    }), "Include partial coverage" + (count != null ? ` (${count})` : ""));
+      type: "checkbox", checked: st.full === "1", "data-k": "chk-full", onchange: (e) => update({ full: e.target.checked ? "1" : "0" }),
+    }), (st.lang === "all" && st.dir === "both" ? `Only systems with all ${D.directions.length} directions` : "Only systems with every selected direction")
+      + (count != null ? ` (${count})` : ""));
   }
   let nextFocus = null;
   function resetButton(keys) {
@@ -469,16 +482,16 @@
   // A toolbar of filters for the views other than the leaderboard; `resetKeys` adds keys that Reset
   // clears although their controls sit elsewhere on the view.
   function filters(opts, resetKeys) {
-    const o = { kind: true, lang: true, mem: true, partial: true, ...(opts || {}) };
+    const o = { kind: true, lang: true, mem: true, full: true, ...(opts || {}) };
     const parts = [];
     if (o.kind) parts.push(kindSeg());
     if (o.lang) parts.push(langSelect());
     parts.push(dirSeg());
     parts.push(typeSeg());
     if (o.mem) parts.push(memSelect());
-    if (o.partial) parts.push(partialCheck());
+    if (o.full) parts.push(fullCheck());
     const keys = FILTER_KEYS.filter((k) => (resetKeys || []).includes(k)
-      || ((k !== "kind" || o.kind) && (k !== "lang" || o.lang) && (k !== "mem" || o.mem) && (k !== "partial" || o.partial)));
+      || ((k !== "kind" || o.kind) && (k !== "lang" || o.lang) && (k !== "mem" || o.mem) && (k !== "full" || o.full)));
     const reset = resetButton(keys);
     return h("form", { class: "toolbar", "aria-label": "Filters", onsubmit: (e) => e.preventDefault() }, parts, reset ? h("div", { class: "tb-right" }, reset) : null);
   }
@@ -501,7 +514,14 @@
   // ---------------------------------------------------------------------------------------------
   // Leaderboard
 
+  // Overall (results/v1.1/) and Hard cases (results/ltb-v1/): one published figure per system, whatever the selection.
+  const HAS_OVERALL = SYS.some((s) => s.overall && isNum(s.overall.overall));
+  const HAS_HARD = SYS.some((s) => s.ltb);
+  const HARD = D.hard_cases || { items: 0, verifier: "", benchmark: "Last Translation Benchmark" };
+  // The fewest directions every pillar must cover for an Overall score (results/v1.1/overall.json).
+  const MIN_DIRS = (D.overall_rule || {}).min_directions || D.directions.length;
   const COLUMNS = [
+    ...(HAS_OVERALL ? [{ key: "overall", label: "Overall", better: "high" }] : []),
     { key: "comet", label: "COMET-22", better: "high" },
     { key: "delta", label: "Δ vs top", better: "high", sortKey: "comet" },
     { key: "mx", label: "MetricX-24", better: "low" },
@@ -509,6 +529,7 @@
     { key: "chrf", label: "chrF++", better: "high" },
     { key: "judge", label: "vs DeepL API", better: "high" },
     { key: "ef", label: "Error-free", better: "high" },
+    ...(HAS_HARD ? [{ key: "hard", label: "Hard cases", better: "high" }] : []),
     { key: "done", label: "Completion", better: "high" },
     { key: "ss", label: "s / sentence", better: "low" },
     { key: "sp", label: "s / passage", better: "low" },
@@ -558,13 +579,15 @@
   // Column help, shown as a tooltip on hover and on keyboard focus of the header.
   const REF = BY[J.reference].name;
   const COLUMN_HELP = {
+    overall: `Mean of COMET-22 × 100, the error-free share (%) and the hard-case pass rate (%); a system below ${D.directions.length} directions (at least ${MIN_DIRS}) is scored over the directions it covers.`,
     comet: "Learned quality metric that compares the translation with a reference. Sentences and passages count 50:50; higher is better.",
-    delta: "COMET-22 difference to the top system in this selection, with the paired 95% interval.",
+    delta: "COMET-22 difference to the top COMET-22 system in this selection, with the paired 95% interval.",
     mx: "A second learned metric, as an error score from 0 to 25; lower is better.",
     mxqe: "MetricX-24 without the reference (quality estimation); lower is better.",
     chrf: "Character n-gram overlap with the reference; higher is better.",
     judge: `Share of non-tied items on which the LLM judge (${J.model_name}) preferred this system to ${REF}, on up to ${JUDGE_MAX} items.`,
     ef: `Share of items in which the LLM judge (${J.model_name}) marked no error, on up to ${JUDGE_MAX} items.`,
+    hard: `Pass rate on ${HARD.items} hard items from the ${HARD.benchmark} in this benchmark's directions, verified by ${HARD.verifier}; below ${D.directions.length} directions, on the items in the directions a system covers.`,
     done: "Share of attempted items with a scored translation.",
     ss: `Median seconds per sentence on one ${MACHINE}, one request at a time. Cloud times are batched and shown only under Cloud.`,
     sp: `Median seconds per passage on one ${MACHINE}, one request at a time. Cloud times are batched and shown only under Cloud.`,
@@ -574,12 +597,13 @@
   };
   const REF_DETAIL = "Batched client requests on Nov 20, including client start-up. In each direction the median of the items' seconds (a request's time divided by its items), then the mean over the directions measured";
 
-  function boardToolbar(partialCount) {
-    const active = (st.dir !== "both") + (st.type !== "overall") + (st.partial === "1");
+  function boardToolbar(fullCount) {
+    const active = (st.dir !== "both") + (st.type !== "overall") + (st.full === "1");
     const more = pop("filters",
       ["Filters", active ? h("span", { class: "badge" }, String(active), h("span", { class: "sr-only" }, " active")) : null],
-      [dirSeg(true), typeSeg(true), partialCheck(partialCount)]);
-    const shown = new Set(st.cols === "none" ? [] : st.cols.split(","));
+      [dirSeg(true), typeSeg(true), fullCheck(fullCount)]);
+    const cols = colsShown();
+    const shown = new Set(cols === "none" ? [] : cols.split(","));
     const forced = COLUMNS.some((c) => c.key === st.sort) ? st.sort : null;
     const columns = pop("cols", "Columns", [
       h("div", { class: "colgrid" }, COLUMNS.map((c) => h("label", { class: "check" },
@@ -599,19 +623,70 @@
       h("div", { class: "tb-right" }, more, columns, resetButton(BOARD_KEYS)));
   }
 
+  // The Overall score with its three pillars, as tooltip lines; below 18 directions they are means over the
+  // directions a system covers.
+  const NDIR = D.directions.length;
+  const langList = (codes) => codes.map((c) => LANG[c] || c).join(", ");
+  function pillarText(e) {
+    const part = (v, n, text) => (isNum(v) ? text + (n != null && n < NDIR ? ` (${n} of ${NDIR} directions)` : "") : null);
+    return [part(e.standard, e.directions.standard, `COMET-22 × 100 ${fx(e.standard, 2)}`),
+      part(e.reliability, e.directions.reliability, `error-free ${fx(e.reliability, 1)}%`),
+      part(e.hard_cases, e.directions.hard_cases, `hard cases ${fx(e.hard_cases, 1)}%`)].filter(Boolean).join(" · ");
+  }
+  function noOverallReason(r) {
+    const e = r.overallE;
+    if (!e) return "no published figures";
+    const d = e.directions;
+    return `COMET-22 with both text types in ${d.standard} of ${NDIR} directions, the judge in ${d.reliability}; it needs ${MIN_DIRS} in every pillar`;
+  }
+  function overallTip(r) {
+    const e = r.overallE;
+    if (!e) return [r.sys.name, "No Overall score"];
+    if (!isNum(e.overall)) return ["No Overall score", r.sys.name, noOverallReason(r), pillarText(e)];
+    const cov = e.coverage < NDIR
+      ? `The mean of the three over the ${e.coverage} of ${NDIR} directions it covers (no ${langList(e.missing_languages)})`
+      : `The mean of the three, over all ${NDIR} directions`;
+    return [`Overall ${fx(e.overall, 1)}`, r.sys.name, pillarText(e), `${cov}; it does not change with the filters`];
+  }
+  // Coverage of a row: of the selection when it misses a selected direction, else of the Overall score when that
+  // covers fewer than 18 directions; null when complete.
+  function coverageOf(r) {
+    if (!r.full) return { n: r.cover, total: r.total, selection: true };
+    if (r.overallE && r.overallE.coverage < NDIR) return { n: r.overallE.coverage, total: NDIR, selection: false };
+    return null;
+  }
+  function coverageBadge(r) {
+    const c = coverageOf(r);
+    if (!c) return null;
+    const e = r.overallE;
+    const missing = e && e.missing_languages.length ? ` (no ${langList(e.missing_languages)})` : "";
+    const lines = c.selection
+      ? [`${c.n} of ${c.total} selected directions`, r.sys.name,
+        c.n ? "Its scores here are means over the directions it covers, and it is not ranked on them." : "No direction of this selection with both text types.",
+        e && isNum(e.overall) ? `Its Overall score is a mean over the ${e.coverage} of ${NDIR} directions it covers${missing}.` : null]
+      : [`${c.n} of ${NDIR} directions`, r.sys.name, `Its Overall score is a mean over the directions it covers${missing}.`,
+        "The other columns cover this selection in full."];
+    const badge = h("span", { class: "cov", tabindex: "0", "aria-label": `${c.n} of ${c.total} directions` }, `${c.n}/${c.total}`);
+    tipTarget(badge, lines);
+    return badge;
+  }
+
   // Four picks above the table: the top cloud and local systems, and the best local systems within 8 and
-  // 4 GiB of peak memory, among the systems covering the selection, by COMET-22.
+  // 4 GiB of peak memory, by the Overall score (COMET-22 without one).
   function boardTiles(rows) {
-    const full = rows.filter((r) => r.full && isNum(r.comet)).sort((a, b) => b.comet - a.comet);
+    const key = HAS_OVERALL ? "overall" : "comet";
+    const full = rows.filter((r) => isNum(r[key]) && (HAS_OVERALL || r.full)).sort((a, b) => b[key] - a[key] || b.comet - a.comet);
     const local = full.filter((r) => r.sys.kind === "local");
     const within = (gib) => local.find((r) => isNum(r.mem) && r.mem <= gib);
     // Each figure stays on one line; a narrow tile wraps between them.
     const figs = (...xs) => xs.map((x, i) => [i ? h("span", { class: "dot" }, " · ") : null, h("span", { class: "fig" }, x)]);
-    const localLine = (r) => figs(fx(r.comet, 4), isNum(r.mem) ? fx(r.mem, 2) + " GiB" : "—", isNum(r.ss) ? fx(r.ss, 2) + " s" : "—");
-    const localTip = (r) => [r.sys.name, `COMET-22 ${fx(r.comet, 4)}`,
+    const score = (r) => (HAS_OVERALL ? `${fx(r.overall, 1)} overall` : `${fx(r.comet, 4)} COMET-22`);
+    const scoreTip = (r) => [r.sys.name, ...(HAS_OVERALL ? [`Overall ${fx(r.overall, 1)}`, pillarText(r.overallE)] : [`COMET-22 ${fx(r.comet, 4)}`])];
+    const localLine = (r) => figs(score(r), isNum(r.mem) ? fx(r.mem, 2) + " GiB" : "—", isNum(r.ss) ? fx(r.ss, 2) + " s" : "—");
+    const localTip = (r) => [...scoreTip(r),
       `Peak memory ${isNum(r.mem) ? fx(r.mem, 2) + " GiB" : "not measured"} · ${isNum(r.ss) ? fx(r.ss, 2) + " s per sentence" : "speed not measured"}`];
     const picks = [
-      ["Top cloud", full.find((r) => r.sys.kind === "cloud"), (r) => figs(`${fx(r.comet, 4)} COMET-22`), null],
+      ["Top cloud", full.find((r) => r.sys.kind === "cloud"), (r) => figs(score(r)), scoreTip],
       ["Top local", local[0], localLine, localTip],
       ["Best within 8 GiB", within(8), localLine, localTip],
       ["Best within 4 GiB", within(4), localLine, localTip],
@@ -619,7 +694,7 @@
     return h("div", { class: "tiles picks" }, picks.map(([label, r, line, tipLines]) => {
       if (!r) return h("div", { class: "tile" }, h("div", { class: "t-lbl" }, label), h("div", { class: "t-name" }, "—"));
       const a = h("a", { class: "tile", href: hashFor("system", { id: r.id }) },
-        h("div", { class: "t-lbl" }, label), h("div", { class: "t-name" }, markedName(r.sys, h("span", { class: "nm" }, r.sys.name))),
+        h("div", { class: "t-lbl" }, label), h("div", { class: "t-name" }, markedName(r.sys, [h("span", { class: "nm" }, r.sys.name), coverageBadge(r)])),
         h("div", { class: "t-sub num" }, line(r)));
       if (tipLines) tipTarget(a, tipLines(r));
       return a;
@@ -631,9 +706,8 @@
     const every = rowsFor(st);
     const all = every.filter((r) => passes(r, st));
     const ranked = all.filter((r) => r.full);
-    const partial = all.filter((r) => !r.full);
-    const showPartial = st.partial === "1";
-    const shown = showPartial ? all : ranked;
+    const onlyFull = st.full === "1";
+    const shown = onlyFull ? ranked : all;
     const judgeRank = judgeRankable(sc);
     const sortKey = !judgeRank && ["judge", "ef"].includes(st.sort) ? "comet" : st.sort;
     const rows = sortRows(shown, sortKey, st.order);
@@ -641,8 +715,13 @@
     const cloudOnly = st.kind === "cloud";
     // DeepL API is the baseline of the pairwise judge: no rank when the table is sorted by preference.
     const byPreference = sortKey === "judge";
+    // Sorted by the Overall score, every system with one is ranked, also over fewer directions (with its badge);
+    // one without comes last, unranked. Sorted by another column, a system missing a selected direction is
+    // listed with its means over the covered directions, unranked.
+    const unranked = (r) => (sortKey === "overall" ? !isNum(r.overall) : !r.full);
     // The shown columns, plus the one the table is sorted by.
-    const want = new Set(st.cols === "none" ? [] : st.cols.split(","));
+    const colsNow = colsShown();
+    const want = new Set(colsNow === "none" ? [] : colsNow.split(","));
     if (COLUMNS.some((c) => c.key === sortKey)) want.add(sortKey);
     let cols = COLUMNS.filter((c) => want.has(c.key));
     if (NARROW()) {
@@ -652,9 +731,11 @@
       cols = [...first, ...second, ...cols.filter((c) => !first.includes(c) && !second.includes(c))];
     }
 
-    const out = [h("h1", { class: "sr-only" }, "Leaderboard"), boardToolbar(partial.length)];
+    const out = [h("h1", { class: "sr-only" }, "Leaderboard"), boardToolbar(ranked.length)];
     // The picks above the table, for the whole field only (no kind or memory filter).
-    if (st.kind === "all" && st.mem === "any") out.push(boardTiles(every));
+    if (st.kind === "all" && st.mem === "any") {
+      out.push(boardTiles(onlyFull ? every.filter((r) => r.full && !(r.overallE && r.overallE.coverage < NDIR)) : every));
+    }
 
     const sortCol = COLUMNS.find((c) => c.key === sortKey);
     const sortDesc = st.order ? st.order === "desc" : !sortCol || sortCol.better !== "low";
@@ -695,20 +776,25 @@
     const cometTip = (r) => {
       const lines = [`COMET-22 ${fx(r.comet, 4)}`, r.sys.name];
       if (!r.full) lines.push(`${r.cover} of ${r.total} directions covered; not ranked`);
-      else if (leader && r.id === leader.id) lines.push("#1 in this selection");
+      else if (leader && r.id === leader.id) lines.push("Top COMET-22 in this selection");
       else if (leader) {
         const p = deltas.get(r.id);
-        if (p === undefined) lines.push("Δ vs #1: computing…");
+        if (p === undefined) lines.push("Δ vs the top COMET-22: computing…");
         else if (p) {
-          lines.push(`Δ vs #1 (${leader.sys.name}): ${signed(p.delta)}, 95% interval ${ciText(p)}`);
-          if (tied(p)) lines.push("≈ tied with #1: the paired 95% interval includes zero");
+          lines.push(`Δ vs the top COMET-22 (${leader.sys.name}): ${signed(p.delta)}, 95% interval ${ciText(p)}`);
+          if (tied(p)) lines.push("≈ tied with it: the paired 95% interval includes zero");
         }
       }
       return lines;
     };
-    const star = (r) => (r.full ? null : h("span", { class: "star", title: "Partial coverage, not ranked" }, "*"));
+    const star = () => null;  // the coverage badge next to the name marks a row's means over fewer directions
     function cellFor(r, c) {
       switch (c.key) {
+        case "overall": {
+          const td = h("td", { class: "n" + (isNum(r.overall) ? "" : " na"), tabindex: r.overallE ? "0" : null }, fx(r.overall, 1));
+          if (r.overallE) tipTarget(td, overallTip(r));
+          return td;
+        }
         case "comet": {
           const mark = h("span", { class: "mark" }, "");
           marks.set(r.id, mark);
@@ -743,6 +829,16 @@
             `n ${e.n}: ${e.n} items` + (e.directions ? ` in ${e.directions} direction${e.directions > 1 ? "s" : ""}` : "") + `, annotated by ${J.model_name}` + (e.ci ? `; 95% interval ${pct(e.ci[0])}–${pct(e.ci[1])}` : "; intervals are shown over all 18 directions only")]);
           return td;
         }
+        case "hard": {
+          if (!r.hardE) return h("td", { class: "n na" }, "—");
+          const e = r.hardE;
+          const td = h("td", { class: "n", tabindex: "0" }, pct(e.rate, 1));
+          tipTarget(td, [`${pct(e.rate, 1)} of ${e.items} hard items passed (${e.passed})`, r.sys.name,
+            `${HARD.benchmark} items in ${e.directions < NDIR ? `the ${e.directions} directions it covers` : "this benchmark's directions"}, verified by ${HARD.verifier}; 95% interval ${pct(e.ci[0], 1)}–${pct(e.ci[1], 1)}`,
+            e.all ? `On all ${e.all.items} items: ${pct(e.all.rate, 1)} (${e.all.passed}); the items in the directions it does not cover leave the denominator` : null,
+            "One figure per system; it does not change with the filters"]);
+          return td;
+        }
         case "done": return h("td", { class: "n" }, isNum(r.done) ? (r.done === 1 ? "100%" : pct(r.done, 1)) : "—");
         case "ss": case "sp": {
           const v = r[c.key], ref = c.key === "ss" ? r.ssRef : r.spRef;
@@ -769,34 +865,39 @@
         default: return h("td", null, "");
       }
     }
-    function sysCell(sys) {
+    function sysCell(r) {
+      const sys = r.sys;
       const short = shortName(sys);
       const name = short === sys.name ? sys.name : [h("span", { class: "wide-only" }, sys.name), h("span", { class: "narrow-only" }, short)];
       return h("td", { class: "sys" },
         markedName(sys, [h("a", { href: hashFor("system", { id: sys.id }) }, name),
-          h("span", { class: "sr-only" }, sys.kind === "local" ? " (local)" : " (cloud)")]));
+          h("span", { class: "sr-only" }, sys.kind === "local" ? " (local)" : " (cloud)"), coverageBadge(r)]));
     }
 
     let rank = 0;
     const tbody = h("tbody", null, rows.length ? rows.map((r) => {
       const baseline = byPreference && r.id === J.reference;
-      if (r.full && !baseline) rank++;
+      if (!unranked(r) && !baseline) rank++;
+      const rankTitle = baseline ? "The baseline of the pairwise judge: not ranked by preference"
+        : !unranked(r) ? null : sortKey === "overall" ? `No Overall score: ${noOverallReason(r)}`
+          : "Not every selected direction covered: not ranked on this column";
       return h("tr", { class: "k-" + r.sys.kind + (r.full ? "" : " partial-row") },
-        h("td", { class: "rank n", title: baseline ? "The baseline of the pairwise judge: not ranked by preference" : null }, baseline ? "baseline" : r.full ? String(rank) : "—"),
-        sysCell(r.sys), cols.map((c) => cellFor(r, c)));
+        h("td", { class: "rank n", title: rankTitle }, baseline ? "baseline" : unranked(r) ? "—" : String(rank)),
+        sysCell(r), cols.map((c) => cellFor(r, c)));
     }) : h("tr", null, h("td", { class: "na", colspan: String(cols.length + 2) }, "No systems match these filters.")));
-    const caption = h("caption", { class: "sr-only" }, `Translate Bench v1 · ${scopeText(sc, st)}`);
+    const caption = h("caption", { class: "sr-only" }, `Translate Bench v1.1 · ${scopeText(sc, st)}`);
     const busy = leader && ranked.length > 1;
     const table = h("table", { class: "board", "data-busy": busy ? "1" : null }, caption, thead, tbody);
     out.push(tableWrap("Leaderboard table", table));
 
     out.push(h("p", { class: "legend-line" },
       h("span", { class: "kbar local" }, "Local"), h("span", { class: "kbar cloud" }, "Cloud"),
-      h("span", null, h("b", { class: "tie-mark", "aria-hidden": "true" }, "≈"), " tied with #1"),
-      showPartial ? [h("span", { class: "sep", "aria-hidden": "true" }, "·"), h("span", null, "* partial coverage")] : null));
+      h("span", null, h("b", { class: "tie-mark", "aria-hidden": "true" }, "≈"), " tied with the top COMET-22"),
+      rows.some((r) => coverageOf(r)) ? [h("span", { class: "sep", "aria-hidden": "true" }, "·"),
+        h("span", null, h("span", { class: "cov", "aria-hidden": "true" }, `16/${NDIR}`), " means over the directions a system covers")] : null));
 
     if (busy) {
-      // ≈ marks the systems whose paired 95% interval against #1 includes zero.
+      // ≈ marks the systems whose paired COMET-22 interval against the top COMET-22 system includes zero.
       const targets = rows.filter((r) => r.full);
       inSlices(targets, (r) => {
         if (r.id === leader.id) return;
@@ -1083,7 +1184,7 @@
   function viewTradeoffs() {
     const sc = scopeOf(st);
     const out = [h("h1", { class: "sr-only" }, "Speed & memory"), filters({ kind: false, mem: false })];
-    const rows = rowsFor(st).filter((r) => r.sys.kind === "local" && (r.full || (st.partial === "1" && r.cover > 0)));
+    const rows = rowsFor(st).filter((r) => r.sys.kind === "local" && (r.full || (st.full !== "1" && r.cover > 0)));
     const speedKey = st.type === "sentence" ? "ss" : st.type === "passage" ? "sp" : null;
     const speedOfRow = (r) => (speedKey ? r[speedKey] : isNum(r.ss) && isNum(r.sp) ? (r.ss + r.sp) / 2 : null);
     const speedHelp = st.type === "overall" ? "Seconds per item: the mean of the sentence and passage medians" : `Median seconds per ${st.type}`;
@@ -1098,9 +1199,9 @@
     const c1 = h("div", { class: "chart" }), c2 = h("div", { class: "chart" });
     const frontierHelp = "The line traces the Pareto frontier.";
     out.push(h("div", { class: "grid2" },
-      h("section", { class: "card", "aria-labelledby": "t-mem" }, h("h2", { id: "t-mem", title: `COMET-22 against peak memory. ${frontierHelp}` }, "Quality vs memory"), c1),
-      h("section", { class: "card", "aria-labelledby": "t-spd" }, h("h2", { id: "t-spd", title: `${speedHelp}. ${frontierHelp}` }, "Quality vs speed"), c2)));
-    if (st.partial === "1" && memPts.concat(spdPts).some((p) => p.hollow)) out.push(hollowLegend("Partial coverage: averaged over the directions covered"));
+      h("section", { class: "card", "aria-labelledby": "t-mem" }, h("h2", { id: "t-mem", title: `COMET-22 against peak memory. ${frontierHelp}` }, "COMET-22 vs memory"), c1),
+      h("section", { class: "card", "aria-labelledby": "t-spd" }, h("h2", { id: "t-spd", title: `COMET-22 against speed. ${speedHelp}. ${frontierHelp}` }, "COMET-22 vs speed"), c2)));
+    if (memPts.concat(spdPts).some((p) => p.hollow)) out.push(hollowLegend("Partial coverage: averaged over the directions covered"));
     requestAnimationFrame(() => {
       if (memPts.length) scatterChart(c1, memPts, { title: "COMET-22 against peak memory", log: true, frontier: true, xLabel: "Peak memory (GiB, log)", yLabel: "COMET-22", xFmt: (t) => String(t), yFmt: (t) => t.toFixed(3) });
       if (spdPts.length) scatterChart(c2, spdPts, { title: `COMET-22 against seconds per ${st.type === "overall" ? "item" : st.type}`, log: true, frontier: true, xLabel: speedLabel, yLabel: "COMET-22", xFmt: (t) => String(t), yFmt: (t) => t.toFixed(3) });
@@ -1118,7 +1219,7 @@
       h("td", { class: "n" + (isNum(r.mem) ? "" : " na") }, isNum(r.mem) ? fx(r.mem, 2) : "not measured"), h("td", { class: "n" }, fx(speedOfRow(r), 2)),
       h("td", null, [fm.has(r.id) ? "memory" : null, fs.has(r.id) ? "speed" : null].filter(Boolean).join(", ") || "")));
     out.push(h("details", { class: "fold" }, h("summary", null, `Table (${tableRows.length})`),
-      tableWrap("Quality, memory and speed of local systems", h("table", null,
+      tableWrap("COMET-22, memory and speed of local systems", h("table", null,
         h("caption", { class: "sr-only" }, scopeText(sc, st)),
         h("thead", null, h("tr", null, h("th", { scope: "col", class: "sys" }, "System"), h("th", { scope: "col", class: "n" }, "COMET-22"),
           h("th", { scope: "col", class: "n" }, "Peak memory (GiB)"), h("th", { scope: "col", class: "n", title: speedHelp }, st.type === "overall" ? "s per item" : `s per ${st.type}`),
@@ -1128,9 +1229,9 @@
     return out;
   }
 
-  // Model size: each local family by total parameters, against DeepL API and the top cloud system.
+  // Model size: each local family by total parameters, against DeepL API and the top cloud system on COMET-22.
   function sizeSection(sc) {
-    const out = [h("h2", { id: "sizes", tabindex: "-1", title: "Local model families by total parameters; dashed lines mark DeepL API and the top cloud system" }, "Quality vs parameters")];
+    const out = [h("h2", { id: "sizes", tabindex: "-1", title: "COMET-22 of the local model families by total parameters; dashed lines mark DeepL API and the top cloud system on COMET-22" }, "COMET-22 vs parameters")];
     const fams = Object.entries(D.families);
     const colors = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)", "var(--s5)", "var(--s6)"];
     const series = fams.map(([fam, ids], i) => ({
@@ -1143,7 +1244,7 @@
     const cloud = rows.filter((r) => r.sys.kind === "cloud" && r.full).sort((a, b) => b.comet - a.comet);
     const refs = [];
     const deepl = rows.find((r) => r.id === "deepl-api" && r.full);
-    if (cloud[0]) refs.push({ name: cloud[0].sys.name + " (top cloud)", short: "Top cloud", y: cloud[0].comet });
+    if (cloud[0]) refs.push({ name: cloud[0].sys.name + " (top cloud, COMET-22)", short: "Top cloud", y: cloud[0].comet });
     if (deepl && (!cloud[0] || cloud[0].id !== deepl.id)) refs.push({ name: "DeepL API", short: "DeepL API", y: deepl.comet });
     const chart = h("div", { class: "chart" });
     out.push(h("div", { class: "card" }, chart));
@@ -1214,7 +1315,7 @@
 
   function viewLanguages() {
     // The kind filter only applies to the heat map, so its control sits there; Reset clears it too.
-    const out = [h("h1", { class: "sr-only" }, "Languages"), filters({ kind: false, lang: false, mem: false, partial: false }, ["kind"])];
+    const out = [h("h1", { class: "sr-only" }, "Languages"), filters({ kind: false, lang: false, mem: false, full: false }, ["kind"])];
     const trs = [], pend = [];
     for (const l of D.languages) {
       const s2 = { ...st, lang: l.code };
@@ -1231,7 +1332,7 @@
     }
     out.push(tableWrap("Leaders by language", h("table", { class: "leaders" },
       h("caption", { class: "sr-only" }, `${TYPE_NAME[st.type]} · COMET-22`),
-      h("thead", null, h("tr", null, ["Language", "Top local", "COMET-22", "Top cloud", "COMET-22", "Cloud − local [95% CI]"].map((t, i) => h("th", { scope: "col", class: [2, 4, 5].includes(i) ? "n" : (i === 0 ? "sys" : null) }, t)))),
+      h("thead", null, h("tr", null, ["Language", "Top local on COMET-22", "COMET-22", "Top cloud on COMET-22", "COMET-22", "Cloud − local [95% CI]"].map((t, i) => h("th", { scope: "col", class: [2, 4, 5].includes(i) ? "n" : (i === 0 ? "sys" : null) }, t)))),
       h("tbody", null, trs))));
     out.push(h("p", { class: "legend-line" }, h("span", null, "Muted = tied (95% interval)")));
     inSlices(pend, (p) => {
@@ -1262,7 +1363,7 @@
       [["≤ 0.002", 1], ["≤ 0.005", 2], ["≤ 0.010", 3], ["≤ 0.020", 4], ["> 0.020", 5]].map(([t, k]) => h("span", null, h("i", { class: "h" + k }), t)),
       st.kind === "all" ? [h("span", { class: "kbar local" }, "Local"), h("span", { class: "kbar cloud" }, "Cloud")] : null));
     out.push(tableWrap("COMET-22 heat map", h("table", { class: "heat" + (st.by === "pair" ? " pairs" : "") },
-      h("caption", { class: "sr-only" }, `${st.type === "overall" ? "" : TYPE_NAME[st.type] + " · "}COMET-22 · sorted by overall score · — = not measured`),
+      h("caption", { class: "sr-only" }, `${st.type === "overall" ? "" : TYPE_NAME[st.type] + " · "}COMET-22 · sorted by COMET-22 over all languages · — = not measured`),
       h("thead", null, h("tr", null, h("th", { scope: "col", class: "sys" }, "System"), cols.map((c) => h("th", { scope: "col", class: "dh", title: c.title }, c.label)))),
       h("tbody", null, sysRows.map((r) => h("tr", { class: "k-" + r.s.kind }, h("th", { scope: "row", class: "sys" }, markedName(r.s,
         [h("a", { href: hashFor("system", { id: r.s.id }), title: shortName(r.s) === r.s.name ? null : r.s.name }, shortName(r.s)),
@@ -1301,7 +1402,7 @@
     const judgeRank = judgeRankable(sc);
     const out = [h("h1", null, "Where the metrics disagree"),
       h("p", { class: "lede" }, "How the order of systems changes between COMET-22, MetricX-24 and the LLM judge."),
-      filters({ partial: false })];
+      filters({ full: false })];
     const rows = rowsFor(st).filter((r) => passes(r, st) && r.full);
     const allMetrics = [
       { key: "comet", label: "COMET-22", better: "high", fmt: (v) => fx(v, 4) },
@@ -1423,12 +1524,15 @@
     }
     const dl = h("dl", { class: "meta" }, items.filter(([, v]) => v != null && v !== "").flatMap(([k, v]) => [h("dt", null, k), h("dd", null, String(v))]));
 
-    // Tiles: the leaderboard's default columns over every direction, both text types.
+    // Tiles over every direction, both text types: the Overall score and its three pillars first, then the
+    // other default columns. Ranks: the Overall score among the systems with one, COMET-22 among full coverage.
     const sAll = { ...DEFAULT };
     const rows = rowsFor(sAll);
     const me = rows.find((r) => r.id === sys.id);
     const ranked = rows.filter((r) => r.full).sort((a, b) => b.comet - a.comet);
     const pos = ranked.findIndex((r) => r.id === sys.id);
+    const byOverall = rows.filter((r) => isNum(r.overall)).sort((a, b) => b.overall - a.overall || b.comet - a.comet);
+    const oPos = byOverall.findIndex((r) => r.id === sys.id);
     const js = J.systems[sys.id] || {};
     const jsAll = js.all || {};
     const tile = (label, value, sub, title) => h("div", { class: "tile", title: title || null }, h("div", { class: "t-lbl" }, label), h("div", { class: "t-val" }, value), sub ? h("div", { class: "t-sub" }, sub) : null);
@@ -1442,15 +1546,32 @@
       const r = sys.reference && sys.reference.s;
       speedTile = tile("Batched time", r ? `${fx(r.seconds, 2)} s` : "—", r ? "per sentence, batched requests" : null, r ? REF_DETAIL : null);
     }
-    const tiles = h("div", { class: "tiles" },
-      tile("COMET-22 ↑", fx(me.comet, 4), me.full ? `rank ${pos + 1} of ${ranked.length}` : partialSub),
+    const oe = sys.overall;
+    let overallTile = null;
+    if (oe) {
+      const cov = oe.coverage < NDIR ? ` · mean over ${oe.coverage} of ${NDIR} directions (no ${langList(oe.missing_languages)})` : " · mean of the three pillars";
+      overallTile = isNum(oe.overall)
+        ? tile("Overall ↑", fx(oe.overall, 1), `rank ${oPos + 1} of ${byOverall.length}${cov}`, COLUMN_HELP.overall)
+        : tile("Overall ↑", "—", `No Overall score: ${noOverallReason(me)}`, COLUMN_HELP.overall);
+    }
+    const ef = jsAll.ef;
+    const efSub = !ef ? null : ef.directions && ef.directions < NDIR ? `${ef.directions} of ${NDIR} directions`
+      : ef.ci ? `95% interval ${pct(ef.ci[0], 1)}–${pct(ef.ci[1], 1)}` : null;
+    const hard = sys.ltb;
+    const hardSub = !hard ? null : `95% interval ${pct(hard.ci[0], 1)}–${pct(hard.ci[1], 1)} · ${hard.items} items`
+      + (hard.all ? ` in its ${hard.directions} directions; ${pct(hard.all.rate, 1)} on all ${hard.all.items}` : "");
+    const hardTile = HAS_HARD ? tile("Hard cases ↑", hard ? pct(hard.rate, 1) : "—", hardSub, COLUMN_HELP.hard) : null;
+    const tiles = h("div", { class: "tiles sys" },
+      overallTile,
+      tile("COMET-22 ↑", fx(me.comet, 4), me.full ? `rank ${pos + 1} of ${ranked.length} on COMET-22` : partialSub),
+      tile("Error-free ↑", ef ? pct(ef.value, 1) : "—", efSub, COLUMN_HELP.ef),
+      hardTile,
       tile("MetricX-24 ↓", fx(me.mx, 3), partialSub),
       tile(`vs ${REF} ↑`, sys.id === J.reference ? "baseline" : jsAll.vs ? pct(jsAll.vs.preferred) : "—", sys.id === J.reference ? "every other system is compared with it" : null),
-      tile("Error-free ↑", jsAll.ef ? pct(jsAll.ef.value) : "—"),
       speedTile);
 
     // Judge by text type.
-    const jrows = [["all", "Overall"], ["sentence", "Sentences"], ["passage", "Passages"]].filter(([k]) => js[k]).map(([k, label]) => {
+    const jrows = [["all", "Both types"], ["sentence", "Sentences"], ["passage", "Passages"]].filter(([k]) => js[k]).map(([k, label]) => {
       const e = js[k], vs = e.vs, ef = e.ef;
       const n = vs && ef && vs.n !== ef.n ? `${vs.n} / ${ef.n}` : String((vs || ef || {}).n ?? "—");
       return h("tr", null, h("th", { scope: "row" }, label),

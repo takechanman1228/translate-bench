@@ -84,7 +84,7 @@ A local GGUF model attempted in English–Japanese and English–German (made up
 
 `validate-submission` checks that every row follows the schema and is a release item, that every attempted cell is complete, and that the submitted files agree with each other. It cannot see your outputs, so the scores are your attestation until a maintainer reproduces them from your privately shared `predictions.jsonl` or by rerunning the system.
 
-Accepted systems are added in a new results version, and `results/v1/` does not change. Submitted systems have no speed or memory figures.
+Accepted systems are added in a new results version, and `results/v1/` does not change. Submitted systems have no speed or memory figures, and no hard-case score, so they get no Overall score.
 
 ## Corrections
 

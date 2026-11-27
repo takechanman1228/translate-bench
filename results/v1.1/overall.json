@@ -1,0 +1,639 @@
+{
+ "schema": "translate-bench/overall@1",
+ "release": "v1.1",
+ "results": "v1",
+ "aggregation": "The Overall score is the mean of three pillars on a 0-100 scale, weighted equally and rounded to one decimal: standard (COMET-22 over the directions the system covers, times 100), reliability (the share of the LLM judge's sample with no error marked, in percent) and hard cases (the pass rate on the Last Translation Benchmark items in the release's directions, in percent; for a system below 18 directions, on the items in the directions it covers). MetricX-24 is not part of it, and it has no interval.",
+ "rule": "A system gets an Overall score when every pillar covers at least 12 of the 18 directions. Below 18, each pillar is a mean over the directions the system covers, and the coverage is published with the score. The other systems keep their pillar values.",
+ "min_directions": 12,
+ "directions": 18,
+ "pillars": {
+  "standard": {
+   "name": "Standard",
+   "description": "COMET-22 over the directions the system covers, times 100",
+   "source": "results/v1/summary.json"
+  },
+  "reliability": {
+   "name": "Reliability",
+   "description": "Share of the judge's sample with no error marked, in percent",
+   "source": "results/v1/judge/summary.json",
+   "judge": "claude-fable-5-2"
+  },
+  "hard_cases": {
+   "name": "Hard cases",
+   "description": "Pass rate on the Last Translation Benchmark items in the directions the system covers, in percent",
+   "source": "results/ltb-v1/summary.json",
+   "verifier": "claude-sonnet-5-5",
+   "items": 208
+  }
+ },
+ "sources": {
+  "results/v1/summary.json": "1e26fd4cd4cad63a42ddcfa02279878b3b17c63942444f0b9d1ffcae99e6d9b2",
+  "results/v1/judge/summary.json": "36f9ac375ccc8a83825e868728de5c06fda3d3a18666335795b2828cf84700b3",
+  "results/ltb-v1/summary.json": "72d16f1a53edf669f290bbe88049f7ba38123ea8ceb04a314a68fd1a72ce28ad"
+ },
+ "counts": {
+  "systems": 40,
+  "overall": 38,
+  "full": 31,
+  "partial": 7,
+  "without_overall": 2
+ },
+ "systems": {
+  "hy-mt2-1.8b": {
+   "overall": 37.7,
+   "standard": 84.4108,
+   "reliability": 28.82,
+   "hard_cases": 0.0,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "hy-mt2-7b": {
+   "overall": 46.8,
+   "standard": 85.7108,
+   "reliability": 52.43,
+   "hard_cases": 2.4038,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "hy-mt2-30b-a3b": {
+   "overall": 49.6,
+   "standard": 85.8666,
+   "reliability": 59.03,
+   "hard_cases": 3.8462,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "plamo-3-translate-0.8b": {
+   "overall": 39.9,
+   "standard": 83.9031,
+   "reliability": 34.38,
+   "hard_cases": 1.4423,
+   "coverage": 16,
+   "directions": {
+    "standard": 16,
+    "reliability": 16,
+    "hard_cases": 16
+   },
+   "hard_cases_items": 208,
+   "missing_languages": [
+    "pt-BR"
+   ]
+  },
+  "plamo-3-translate-2b": {
+   "overall": 45.8,
+   "standard": 84.8854,
+   "reliability": 51.56,
+   "hard_cases": 0.9615,
+   "coverage": 16,
+   "directions": {
+    "standard": 16,
+    "reliability": 16,
+    "hard_cases": 16
+   },
+   "hard_cases_items": 208,
+   "missing_languages": [
+    "pt-BR"
+   ]
+  },
+  "plamo-3-translate-8b": {
+   "overall": 48.9,
+   "standard": 85.2928,
+   "reliability": 57.03,
+   "hard_cases": 4.3269,
+   "coverage": 16,
+   "directions": {
+    "standard": 16,
+    "reliability": 16,
+    "hard_cases": 16
+   },
+   "hard_cases_items": 208,
+   "missing_languages": [
+    "pt-BR"
+   ]
+  },
+  "plamo-3-translate-31b": {
+   "overall": 52.7,
+   "standard": 85.5506,
+   "reliability": 67.19,
+   "hard_cases": 5.2885,
+   "coverage": 16,
+   "directions": {
+    "standard": 16,
+    "reliability": 16,
+    "hard_cases": 16
+   },
+   "hard_cases_items": 208,
+   "missing_languages": [
+    "pt-BR"
+   ]
+  },
+  "index-translate-2b": {
+   "overall": 42.2,
+   "standard": 84.7472,
+   "reliability": 40.28,
+   "hard_cases": 1.4423,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "index-translate-9b": {
+   "overall": 51.6,
+   "standard": 85.6935,
+   "reliability": 65.28,
+   "hard_cases": 3.8462,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "index-translate-35b-a3b-preview": {
+   "overall": 52.3,
+   "standard": 85.605,
+   "reliability": 65.62,
+   "hard_cases": 5.7692,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "translategemma-4b": {
+   "overall": 39.1,
+   "standard": 84.3526,
+   "reliability": 29.51,
+   "hard_cases": 3.3654,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "translategemma-12b": {
+   "overall": 44.4,
+   "standard": 85.0986,
+   "reliability": 43.4,
+   "hard_cases": 4.8077,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "translategemma-27b": {
+   "overall": 46.6,
+   "standard": 85.4584,
+   "reliability": 48.96,
+   "hard_cases": 5.2885,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gemma-4-e2b-it": {
+   "overall": 39.1,
+   "standard": 83.5431,
+   "reliability": 33.68,
+   "hard_cases": 0.0,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gemma-4-e4b-it": {
+   "overall": 42.3,
+   "standard": 84.3249,
+   "reliability": 42.01,
+   "hard_cases": 0.4808,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gemma-4-12b-it": {
+   "overall": 49.9,
+   "standard": 85.0956,
+   "reliability": 57.99,
+   "hard_cases": 6.7308,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gemma-4-31b-it": {
+   "overall": 56.2,
+   "standard": 85.6522,
+   "reliability": 74.26,
+   "hard_cases": 8.6538,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "qwen3.5-2b": {
+   "overall": 31.2,
+   "standard": 80.345,
+   "reliability": 12.15,
+   "hard_cases": 0.9615,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "qwen3.5-4b": {
+   "overall": 35.9,
+   "standard": 83.47,
+   "reliability": 23.26,
+   "hard_cases": 0.9615,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "qwen3.5-9b": {
+   "overall": 41.7,
+   "standard": 84.3286,
+   "reliability": 37.85,
+   "hard_cases": 2.8846,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "qwen3.5-27b": {
+   "overall": 47.8,
+   "standard": 85.1054,
+   "reliability": 53.47,
+   "hard_cases": 4.8077,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "seed-x-ppo-7b": {
+   "overall": 45.8,
+   "standard": 84.9972,
+   "reliability": 49.65,
+   "hard_cases": 2.8846,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "eurollm-22b-instruct-2512": {
+   "overall": 44.9,
+   "standard": 84.4951,
+   "reliability": 49.22,
+   "hard_cases": 1.0638,
+   "coverage": 16,
+   "directions": {
+    "standard": 16,
+    "reliability": 16,
+    "hard_cases": 16
+   },
+   "hard_cases_items": 188,
+   "missing_languages": [
+    "id"
+   ]
+  },
+  "qwen-mt-lumen": {
+   "overall": null,
+   "standard": 86.936,
+   "reliability": 57.5,
+   "hard_cases": 7.5,
+   "coverage": 5,
+   "directions": {
+    "standard": 5,
+    "reliability": 5,
+    "hard_cases": 5
+   },
+   "hard_cases_items": 40,
+   "missing_languages": [
+    "ja",
+    "zh-Hans",
+    "es",
+    "ko",
+    "fr",
+    "de",
+    "pt-BR",
+    "ar",
+    "id"
+   ]
+  },
+  "apple-foundation-models": {
+   "overall": 40.9,
+   "standard": 83.7838,
+   "reliability": 38.46,
+   "hard_cases": 0.5882,
+   "coverage": 14,
+   "directions": {
+    "standard": 14,
+    "reliability": 14,
+    "hard_cases": 14
+   },
+   "hard_cases_items": 170,
+   "missing_languages": [
+    "ar",
+    "id"
+   ]
+  },
+  "apple-foundation-models-permissive": {
+   "overall": 40.9,
+   "standard": 83.8306,
+   "reliability": 38.39,
+   "hard_cases": 0.5882,
+   "coverage": 14,
+   "directions": {
+    "standard": 14,
+    "reliability": 14,
+    "hard_cases": 14
+   },
+   "hard_cases_items": 170,
+   "missing_languages": [
+    "ar",
+    "id"
+   ]
+  },
+  "apple-translation": {
+   "overall": 38.6,
+   "standard": 83.6904,
+   "reliability": 31.25,
+   "hard_cases": 0.9615,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gpt-6.2-astra": {
+   "overall": 77.4,
+   "standard": 85.7675,
+   "reliability": 94.44,
+   "hard_cases": 51.9231,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gpt-6.2-sol": {
+   "overall": 74.9,
+   "standard": 85.8375,
+   "reliability": 93.75,
+   "hard_cases": 45.1923,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gpt-6.1-terra": {
+   "overall": 68.3,
+   "standard": 86.214,
+   "reliability": 92.36,
+   "hard_cases": 26.4423,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gpt-6-luna": {
+   "overall": 59.5,
+   "standard": 85.9858,
+   "reliability": 84.72,
+   "hard_cases": 7.6923,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "claude-fable-5-2": {
+   "overall": 81.4,
+   "standard": 86.0542,
+   "reliability": 96.53,
+   "hard_cases": 61.5385,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "claude-opus-5-5": {
+   "overall": 73.2,
+   "standard": 86.1559,
+   "reliability": 94.44,
+   "hard_cases": 38.9423,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "claude-sonnet-5-5": {
+   "overall": 73.7,
+   "standard": 85.915,
+   "reliability": 88.19,
+   "hard_cases": 47.1154,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "claude-haiku-5-5": {
+   "overall": 52.6,
+   "standard": 84.7617,
+   "reliability": 64.93,
+   "hard_cases": 8.1731,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gemini-4-argon": {
+   "overall": 75.6,
+   "standard": 86.0739,
+   "reliability": 87.5,
+   "hard_cases": 53.3654,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gemini-4-neon": {
+   "overall": 79.5,
+   "standard": 86.1061,
+   "reliability": 96.53,
+   "hard_cases": 55.7692,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gemini-4-hydrogen": {
+   "overall": 74.3,
+   "standard": 86.0373,
+   "reliability": 94.44,
+   "hard_cases": 42.3077,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  },
+  "gemini-3.8-flash": {
+   "overall": null,
+   "standard": null,
+   "reliability": 97.92,
+   "hard_cases": 34.1346,
+   "coverage": 0,
+   "directions": {
+    "standard": 0,
+    "reliability": 12,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": [
+    "ja",
+    "zh-Hans",
+    "es",
+    "ko",
+    "fr",
+    "de",
+    "pt-BR",
+    "ar",
+    "id"
+   ]
+  },
+  "deepl-api": {
+   "overall": 53.6,
+   "standard": 85.7571,
+   "reliability": 71.18,
+   "hard_cases": 3.8462,
+   "coverage": 18,
+   "directions": {
+    "standard": 18,
+    "reliability": 18,
+    "hard_cases": 18
+   },
+   "hard_cases_items": 208,
+   "missing_languages": []
+  }
+ }
+}

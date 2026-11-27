@@ -155,6 +155,30 @@ class PublicTreeTest(unittest.TestCase):
         self.assertIn("natural-language text in a data field",
                       self.issues(self.repo({"results/v1/items/x.json": json.dumps({"description": text})})))
 
+    def test_hard_cases_allow_list(self):
+        label = {"source_label": "French (Switzerland, Canton of Vaud)", "target_label": "English"}
+        row = {"id": 1, "pass": False, "verdicts": [False], "status": "ok", "translation_sha256": "0" * 64}
+        clean = {"results/ltb-v1/items.jsonl": json.dumps(dict(label, id=1, rules=1)) + "\n",
+                 "results/ltb-v1/rows/sys-a.jsonl": json.dumps(row) + "\n"}
+        self.assertEqual(self.issues(self.repo(clean)), set())
+        self.assertIn("field outside the hard-cases allow-list", self.issues(self.repo(
+            {"results/ltb-v1/rows/sys-a.jsonl": json.dumps(dict(row, translation="ok")) + "\n"})))
+        self.assertIn("file outside the hard-cases allow-list",
+                      self.issues(self.repo({"results/ltb-v1/notes.txt": "x\n"})))
+        self.assertIn("language label too long or missing", self.issues(self.repo(
+            {"results/ltb-v1/items.jsonl": json.dumps({"id": 1, "source_label": "x" * 60}) + "\n"})))
+
+    def test_overall_and_second_verifier_allow_list(self):
+        overall = json.dumps({"schema": "translate-bench/overall@1", "systems": {"sys-a": {"overall": 50.0}}})
+        second = json.dumps({"verifier": {"name": "X", "setting": "no reasoning-effort setting"},
+                             "systems": {"sys-a": {"items": 2, "passed": {"a": 1, "b": 1}, "agreed": 2}}})
+        clean = {"results/v1.1/overall.json": overall, "results/ltb-v1/second-verifier.json": second}
+        self.assertEqual(self.issues(self.repo(clean)), set())
+        self.assertIn("file outside the Overall-score allow-list",
+                      self.issues(self.repo({"results/v1.1/notes.json": "{}"})))
+        self.assertIn("file outside the hard-cases allow-list",
+                      self.issues(self.repo({"results/ltb-v1/third-verifier.json": "{}"})))
+
     def test_input_files_are_never_published(self):
         self.assertIn("private or input file", self.issues(self.repo({"inputs.tsv": "id\tsource\n"})))
 

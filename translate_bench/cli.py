@@ -8,7 +8,7 @@
     translate-bench judge                error annotation or pairwise judging with a language model
     translate-bench validate-submission  the file checks a maintainer runs on a submitted system
     translate-bench verify               recompute results/v1/summary.json from the item rows
-    translate-bench leaderboard          print the release's table
+    translate-bench leaderboard          print the release's table, ranked by the Overall score
 """
 
 import argparse
@@ -89,10 +89,12 @@ def build_parser():
     p = commands.add_parser("verify", help="recompute results/v1/summary.json and check every results file")
     p.add_argument("--quiet", action="store_true")
 
-    p = commands.add_parser("leaderboard", help="print the release's table from the item rows")
-    p.add_argument("--metric", choices=("comet22", "chrf", "metricx24_ref", "metricx24_qe", "judge_preferred",
-                                        "judge_net", "error_free"), default="comet22",
-                   help="judge_preferred, judge_net and error_free: judge protocol v1 (results/v1/judge/)")
+    p = commands.add_parser("leaderboard", help="print the release's table, ranked by the Overall score")
+    p.add_argument("--metric", choices=("overall", "hard_cases", "comet22", "chrf", "metricx24_ref", "metricx24_qe",
+                                        "judge_preferred", "judge_net", "error_free"),
+                   help="the ranking metric (default: overall; comet22 with --pairs or --view). overall and "
+                        "hard_cases are published per system over all directions; judge_preferred, judge_net and "
+                        "error_free come from judge protocol v1 (results/v1/judge/)")
     p.add_argument("--pairs", help="comma-separated language pairs (default: all nine)")
     p.add_argument("--view", choices=("overall", "sentence", "passage"), default="overall")
     p.add_argument("--kind", choices=("local", "cloud"))

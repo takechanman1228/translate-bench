@@ -1,6 +1,6 @@
 # Methodology
 
-How Translate Bench v1 was measured. The [protocol](../results/v1/protocol.md) is the exact record, with every seed string, revision and hash. Each system's settings are in [`configs/systems.json`](../configs/systems.json).
+How Translate Bench was measured: the v1 results, unchanged in v1.1, and the [hard cases](#hard-cases) and [Overall score](#overall-score) that v1.1 adds. The [protocol](../results/v1/protocol.md) is the exact record of v1, with every seed string, revision and hash, and the [hard-cases protocol](../results/ltb-v1/protocol.md) that of the hard cases. Each system's settings are in [`configs/systems.json`](../configs/systems.json).
 
 ## Data
 
@@ -99,6 +99,7 @@ Items per request: sentences / passages. Concurrent requests: how many requests 
 | MetricX-24 | `google/metricx-24-hybrid-large-v2p6`, float32, with and without the reference | Every item |
 | chrF++ | sacreBLEU 2.5.1, `nrefs:1\|case:mixed\|eff:yes\|nc:6\|nw:2\|space:no\|version:2.5.1` | Every item |
 | LLM judge | Claude Fable 5.2, [judge v1](#judge-v1) | A fixed sample of 288 items |
+| Hard cases | Last Translation Benchmark rules, checked by Claude Sonnet 5.5 ([hard cases](#hard-cases)) | 208 items in the release's directions (911 in all) |
 
 [Reading the metrics](metrics.md) explains what each one measures and why they disagree.
 
@@ -123,3 +124,11 @@ The judge rates every system on one fixed sample: the first 8 item ids per direc
 - **Judge.** Claude Fable 5.2 through Claude Code at high reasoning effort. It sees no reference.
 
 Judge results are aggregated like the scores, with their own 2,000 bootstrap draws. *Preferred* is the share of non-tied items on which the system won. *Error-free* is the share of items with no error counted. The rows and summary are in [`results/v1/judge/`](../results/v1/judge/). `translate-bench judge` runs the same protocol on your own predictions.
+
+## Hard cases
+
+Added in v1.1. Every system translated the 911 text items of the [Last Translation Benchmark](https://github.com/zouharvi/last-translation-benchmark) (LTB; Zouhar et al., 2026, [arXiv:2609.04173](https://arxiv.org/abs/2609.04173); data CC BY 4.0) with its v1 prompt, settings and batching. Each item comes with handwritten rules, such as a word the translation must or must not use. Claude Sonnet 5.5 checks each rule with LTB's own verification prompt, and an item passes when all its rules pass. An item a system cannot translate (an unsupported language pair) or leaves empty fails. The 208 items whose direction is one of the release's 18 (11 directions occur) give the hard-cases figure of the leaderboard and the Overall score; for a system below 18 directions, the items in the directions it covers give it. The pass rate on all 911 is in the summary too. Intervals come from 2,000 bootstrap draws of items. LTB's own leaderboard uses Gemini 3.8 Flash as the verifier, so these are not LTB leaderboard numbers; ten systems were checked again with it. The [hard-cases protocol](../results/ltb-v1/protocol.md) has the details, and the verdicts are in [`results/ltb-v1/`](../results/ltb-v1/), without texts.
+
+## Overall score
+
+Added in v1.1. The Overall score is the mean of three pillars on a 0–100 scale, weighted equally and rounded to one decimal: COMET-22 × 100, the judge's error-free share in percent, and the hard-case pass rate in percent. A system gets one when every pillar covers at least 12 of the 18 directions. Below 18, each pillar is a mean over the directions the system covers: COMET-22 over its complete directions (sentences and passages 50:50), the judge over its sampled items in them, and the hard cases over the items in those directions, so items in a direction it does not cover leave the denominator instead of counting as failed. Coverage comes from v1 (both text types complete). The coverage, such as 16/18, is published with the score; the others keep their pillar values. MetricX-24 is not part of it, and it has no interval of its own. [`results/v1.1/overall.json`](../results/v1.1/overall.json) holds every system's pillars and coverage, and `translate-bench verify` recomputes it from the three summaries.

@@ -1,0 +1,102 @@
+{
+ "schema": "translate-bench/ltb-second-verifier@1",
+ "track": "ltb-v1",
+ "primary": "claude-sonnet-5-5",
+ "verifier": {
+  "name": "Gemini 3.8 Flash",
+  "model": "gemini-3.8-flash",
+  "setting": "no reasoning-effort setting",
+  "client": "Antigravity CLI",
+  "client_versions": [
+   "1.5.18"
+  ]
+ },
+ "scope": "our_directions",
+ "method": "The same prompt, reading of the reply and early exit as the summary's verifier, on the same translation files (same SHA-256), for the items in the release's directions only.",
+ "systems": {
+  "claude-fable-5-2": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 128,
+    "gemini-3.8-flash": 123
+   },
+   "agreed": 199
+  },
+  "claude-opus-5-5": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 81,
+    "gemini-3.8-flash": 79
+   },
+   "agreed": 202
+  },
+  "claude-sonnet-5-5": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 98,
+    "gemini-3.8-flash": 96
+   },
+   "agreed": 200
+  },
+  "gemini-4-argon": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 111,
+    "gemini-3.8-flash": 112
+   },
+   "agreed": 201
+  },
+  "gemini-4-hydrogen": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 88,
+    "gemini-3.8-flash": 88
+   },
+   "agreed": 202
+  },
+  "gemini-4-neon": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 116,
+    "gemini-3.8-flash": 111
+   },
+   "agreed": 203
+  },
+  "gpt-6-luna": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 16,
+    "gemini-3.8-flash": 15
+   },
+   "agreed": 203
+  },
+  "gpt-6.1-terra": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 55,
+    "gemini-3.8-flash": 51
+   },
+   "agreed": 204
+  },
+  "gpt-6.2-astra": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 108,
+    "gemini-3.8-flash": 101
+   },
+   "agreed": 201
+  },
+  "gpt-6.2-sol": {
+   "items": 208,
+   "passed": {
+    "claude-sonnet-5-5": 94,
+    "gemini-3.8-flash": 92
+   },
+   "agreed": 204
+  }
+ },
+ "total": {
+  "items": 2080,
+  "agreed": 2019
+ }
+}

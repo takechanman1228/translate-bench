@@ -1,7 +1,8 @@
 """The numbers that the README, the site and the figures quote, read from the published files.
 
-Everything comes from results/v1/ (summary, speed, item rows, judge v1) and the registry. Nothing is
-typed in by hand: a sentence in the README that names a number gets it from here, and a claim it
+Everything comes from results/v1/ (summary, speed, item rows, judge v1), the hard-cases track
+(results/ltb-v1/), the Overall score (results/v1.1/overall.json) and the registry. Nothing is typed in
+by hand: a sentence in the README that names a number gets it from here, and a claim it
 makes about two numbers ("above", "level with") is checked here, so a changed result either changes
 the text or stops the generator.
 
@@ -12,7 +13,7 @@ ids alone, every system against DeepL API, errors counted one translation at a t
 from functools import cached_property
 from pathlib import Path
 
-from translate_bench import aggregate, schema, stats
+from translate_bench import aggregate, ltb, overall, schema, stats
 
 JUDGE_SOURCE = "v1"
 REFERENCE = "deepl-api"  # the common reference of the judge comparisons
@@ -81,6 +82,9 @@ class Facts:
         self.judge_source = judge_source or JUDGE_SOURCE
         self.judge = JUDGES[self.judge_source](self.root)
         self.judge_label = JUDGE_LABELS[self.judge_source]
+        self.hard_summary = schema.read_json(self.root / ltb.BASE / "summary.json") if ltb.exists(self.root) else None
+        self.second = ltb.second_verifier(self.root)
+        self.overall_data = schema.read_json(self.root / overall.PATH) if overall.exists(self.root) else None
 
     # Names ------------------------------------------------------------------------------------------------
 
@@ -121,6 +125,51 @@ class Facts:
         kinds = (kind,) if kind else schema.KINDS
         order = [s for k in kinds for s in self.summary["rankings"][view][k]]
         return sorted(order, key=lambda s: (-self.comet(s, view), s))
+
+    # Hard cases and the Overall score ----------------------------------------------------------------------
+
+    def hard(self, sid):
+        """The hard-cases pillar (0-1): the pass rate on the items in the release's directions, or for a system
+        below 18 directions on the items in the directions it covers; None without the track."""
+        if self.overall_data is not None:
+            value = self.overall_data["systems"][sid]["hard_cases"]
+            return None if value is None else value / 100
+        e = (self.hard_summary or {}).get("systems", {}).get(sid)
+        return None if e is None else e["our_directions"]["passed"] / e["our_directions"]["items"]
+
+    def hard_block(self, sid):
+        return ((self.hard_summary or {}).get("systems") or {}).get(sid)
+
+    def hard_figure(self, sid):
+        """The block of the hard-cases pillar: `covered` for a system scored on its covered items, else
+        `our_directions`."""
+        e = self.hard_block(sid)
+        if e is None:
+            return None
+        n = len(schema.DIRECTIONS)
+        entry = (self.overall_data or {}).get("systems", {}).get(sid) or {}
+        partial = (entry.get("directions") or {}).get("standard", n) < n
+        return e["covered"] if partial and (e.get("covered") or {}).get("items") else e["our_directions"]
+
+    def coverage(self, sid):
+        """Directions (of 18) that every pillar of the Overall score covers."""
+        return self.overall_data["systems"][sid]["coverage"] if self.overall_data else len(schema.DIRECTIONS)
+
+    def coverage_mark(self, sid):
+        """" (16/18)" for a system below all 18 directions, else ""."""
+        n = self.coverage(sid)
+        return "" if n == len(schema.DIRECTIONS) else f" ({n}/{len(schema.DIRECTIONS)})"
+
+    def overall(self, sid):
+        """The Overall score (0-100, one decimal), or None for a system without one."""
+        return None if self.overall_data is None else self.overall_data["systems"][sid]["overall"]
+
+    def ranked_overall(self, kind=None):
+        """Systems with an Overall score, highest first (ties to the higher COMET-22)."""
+        if self.overall_data is None:
+            return []
+        members = None if kind is None else {s for s in self.systems if self.kind(s) == kind}
+        return overall.ranked(self.overall_data, members)
 
     def count_systems(self, kind=None):
         return sum(1 for s in self.systems.values() if kind is None or s["kind"] == kind)

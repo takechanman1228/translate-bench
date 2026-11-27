@@ -1,4 +1,4 @@
-"""Draw the README figures as SVG from results/v1/ (needs the `figures` extra: matplotlib).
+"""Draw the README figures as SVG from the published results (needs the `figures` extra: matplotlib).
 
     python -m pip install -e '.[figures]'
     python -m translate_bench.export.figures          # writes figures/*.svg
@@ -7,7 +7,11 @@ Figures show the chart only: no headline, finding or footnote inside the image (
 README), raw scores rather than differences, and each system as "Name (Developer)". They are drawn
 on a white background so that they read the same on GitHub's light and dark pages.
 
-- lead.svg                 COMET-22, MetricX-24 and the judge's preference against DeepL API
+- lead.svg                 the Overall score and its three pillars, on one 0-100 scale, for the systems with
+                           an Overall score (results/v1.1/overall.json); below 18 directions with "(16/18)"
+- hard-cases.svg           the hard-cases pillar with its 95% interval for every system (results/ltb-v1/): the
+                           pass rate on the items in the release's directions, or in the directions a system
+                           covers when it covers fewer than 18, marked "(16/18)"
 - size-quality.svg         COMET-22 by total parameters for the local families with several sizes
 - quality-memory.svg       COMET-22 against peak process memory, with the Pareto frontier
 - metric-disagreement.svg  COMET-22 against MetricX-24 for the same systems
@@ -26,6 +30,20 @@ LOCAL, CLOUD = "#2a78d6", "#eb6834"
 FAMILY_COLORS = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300"]
 FAMILY_MARKERS = ["o", "s", "D", "^", "v", "P"]
 INK, INK2, MUTED, GRID, AXIS = "#0b0b0b", "#52514e", "#6f6d67", "#e1e0d9", "#c3c2b7"
+
+
+# Names too long for an axis label, shortened as the leaderboard shortens them.
+SHORT_NAMES = {
+    "Apple Intelligence on-device model (Foundation Models)": "Apple Foundation Models",
+    "Apple Intelligence on-device model (Foundation Models, permissive guardrails)":
+        "Apple Foundation Models, permissive guardrails",
+}
+
+
+def tint(color, share):
+    """`color` mixed with white: an opaque lighter shade, so grid lines stay behind it."""
+    rgb = [int(color[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(255 - share * (255 - c)):02x}" for c in rgb)
 
 
 def setup():
@@ -60,9 +78,10 @@ def save(fig, path):
 
 
 def short_label(facts, sid):
-    """Name (Developer), without a parenthesis already in the name."""
+    """Name (Developer), without a parenthesis already in the name. DeepL API is named as such alone."""
     s = facts.systems[sid]
-    return f"{s['name'].replace(' (on-device)', '')} ({s['developer']})"
+    name = SHORT_NAMES.get(s["name"], s["name"].replace(" (on-device)", ""))
+    return name if s["developer"] == "DeepL" else f"{name} ({s['developer']})"
 
 
 def label_points(ax, points, fontsize=7.2, offsets=None, lines=()):
@@ -140,43 +159,77 @@ def clip_marker(ax, x, y, text, side, color):
                 color=INK2)
 
 
+def kind_legend(plt, fig):
+    handles = [plt.Line2D([], [], marker="s", color=LOCAL, linestyle="none", markersize=6, label="Local"),
+               plt.Line2D([], [], marker="s", color=CLOUD, linestyle="none", markersize=6, label="Cloud")]
+    fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, 1.0), ncol=2, fontsize=8, handletextpad=0.3)
+
+
 def lead(facts, plt, path):
-    systems = facts.ranked()
-    judge = facts.judge
-    rows = list(reversed(systems))
-    fig, axes = plt.subplots(1, 3, figsize=(10.2, 0.215 * len(rows) + 0.9), sharey=True,
-                             gridspec_kw={"width_ratios": [1, 1, 1], "wspace": 0.08})
+    """The Overall score and its three pillars as bars on one 0-100 scale, so each pillar's share is visible."""
+    data = facts.overall_data["systems"]
+    rows = list(reversed(facts.ranked_overall()))
+    fig, axes = plt.subplots(1, 4, figsize=(11.4, 0.215 * len(rows) + 1.0), sharey=True,
+                             gridspec_kw={"width_ratios": [1, 1, 1, 1], "wspace": 0.1})
     y = range(len(rows))
-    names = [short_label(facts, s) for s in rows]
-    panels = [
-        ("COMET-22 (higher is better)", [facts.comet(s) for s in rows], False, "{:.3f}"),
-        ("MetricX-24 (lower is better; axis reversed)", [facts.metricx(s) for s in rows], True, "{:.2f}"),
-        (f"LLM judge: % preferred to {facts.name(REFERENCE)}\n(of decided items)",
-         [None if s == REFERENCE else 100 * judge.versus_reference(s)["preferred"] for s in rows], False, "{:.0f}"),
-    ]
-    limits = [(0.828, 0.865), (4.65, 3.15), (0, 100)]
-    for ax, (title, values, reverse, fmt), (lo, hi) in zip(axes, panels, limits):
+    panels = [("Overall\n(mean of the three pillars)", "overall", 1.0),
+              ("Standard\nCOMET-22 × 100", "standard", 0.45),
+              ("Reliability\nerror-free translations, %", "reliability", 0.45),
+              ("Hard cases\npass rate, %", "hard_cases", 0.45)]
+    for ax, (title, key, shade) in zip(axes, panels):
         grid(ax, "x")
-        for yy, s, v in zip(y, rows, values):
-            if v is None:
-                continue
-            local = facts.kind(s) == "local"
-            color = LOCAL if local else CLOUD
-            if not min(lo, hi) <= v <= max(lo, hi):
-                clip_marker(ax, lo, yy, fmt.format(v), "left", color)
-                continue
-            ax.plot([v], [yy], marker="o" if local else "s", markersize=5.2, color=color,
-                    markeredgecolor="white", markeredgewidth=0.9, linestyle="none", zorder=3)
-        ax.set_xlim(lo, hi)
+        for yy, s in zip(y, rows):
+            v = data[s][key]
+            color = tint(LOCAL if facts.kind(s) == "local" else CLOUD, shade)
+            ax.barh([yy], [v], height=0.68, color=color, linewidth=0, zorder=2)
+            ax.annotate(f"{v:.1f}", (v, yy), xytext=(3, 0), textcoords="offset points", va="center", ha="left",
+                        fontsize=6.9, color=INK if key == "overall" else INK2)
+        ax.set_xlim(0, 114)
+        ax.set_xticks([0, 25, 50, 75, 100])
         ax.set_xlabel(title, fontsize=8.5, color=INK2)
         ax.xaxis.set_label_position("top")
         ax.tick_params(axis="x", labeltop=True, labelbottom=True, top=False, length=0)
         ax.tick_params(axis="y", length=0)
         ax.spines["left"].set_visible(ax is axes[0])
-    axes[2].axvline(50, color=MUTED, linewidth=0.9, zorder=1)
+        ax.spines["bottom"].set_visible(False)
     axes[0].set_yticks(list(y))
-    axes[0].set_yticklabels(names)
+    axes[0].set_yticklabels([short_label(facts, s) + facts.coverage_mark(s) for s in rows])
     axes[0].set_ylim(-0.7, len(rows) - 0.3)
+    kind_legend(plt, fig)
+    save(fig, path)
+    plt.close(fig)
+
+
+def hard_cases(facts, plt, path):
+    """Every system's pass rate on the hard-case items in the release's directions, with its 95% interval."""
+    summary = facts.hard_summary
+    # The hard-cases pillar: on the items in the directions a system covers when it covers fewer than 18.
+    entries = {s: facts.hard_figure(s) for s in summary["systems"]}
+    marks = {s: facts.coverage_mark(s) if entries[s] is summary["systems"][s].get("covered") else "" for s in entries}
+    rows = sorted(entries, key=lambda s: (entries[s]["passed"] / entries[s]["items"], facts.comet(s, "overall_measured")
+                                          or 0, s))
+    fig, ax = plt.subplots(figsize=(7.4, 0.2 * len(rows) + 1.0))
+    grid(ax, "x")
+    for yy, s in enumerate(rows):
+        e = entries[s]
+        rate, (lo, hi) = 100 * e["passed"] / e["items"], (100 * x for x in e["ci95"])
+        local = facts.kind(s) == "local"
+        color = LOCAL if local else CLOUD
+        ax.plot([lo, hi], [yy, yy], color=tint(color, 0.5), linewidth=1.6, solid_capstyle="butt", zorder=2)
+        ax.plot([rate], [yy], marker="o" if local else "s", markersize=5.2, color=color, markeredgecolor="white",
+                markeredgewidth=0.9, linestyle="none", zorder=3)
+        ax.annotate(f"{rate:.1f}", (hi, yy), xytext=(4, 0), textcoords="offset points", va="center", ha="left",
+                    fontsize=6.9, color=INK2)
+    ax.set_xlim(0, 80)
+    ax.set_xticks([0, 20, 40, 60, 80])
+    ax.set_xlabel("Pass rate on the hard items, % (line: 95% interval)", fontsize=8.5, color=INK2)
+    ax.xaxis.set_label_position("top")
+    ax.tick_params(axis="x", labeltop=True, labelbottom=True, top=False, length=0)
+    ax.tick_params(axis="y", length=0)
+    ax.spines["bottom"].set_visible(False)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([short_label(facts, s) + marks[s] for s in rows])
+    ax.set_ylim(-0.7, len(rows) - 0.3)
     handles = [plt.Line2D([], [], marker="o", color=LOCAL, linestyle="none", markersize=5.5, label="Local"),
                plt.Line2D([], [], marker="s", color=CLOUD, linestyle="none", markersize=5.5, label="Cloud")]
     fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, 1.0), ncol=2, fontsize=8, handletextpad=0.3)
@@ -305,8 +358,8 @@ def metric_disagreement(facts, plt, path):
     plt.close(fig)
 
 
-FIGURES = {"lead.svg": lead, "size-quality.svg": size_quality, "quality-memory.svg": quality_memory,
-           "metric-disagreement.svg": metric_disagreement}
+FIGURES = {"lead.svg": lead, "hard-cases.svg": hard_cases, "size-quality.svg": size_quality,
+           "quality-memory.svg": quality_memory, "metric-disagreement.svg": metric_disagreement}
 
 
 def main(argv=None):

@@ -1,6 +1,6 @@
 # Reading the metrics
 
-Translate Bench reports several quality measures side by side and does not combine them. Near the top of the leaderboard they disagree on the order.
+Translate Bench reports several quality measures side by side. Since v1.1 it also ranks by an [Overall score](methodology.md#overall-score) that averages three of them: COMET-22, error-free and hard cases. Near the top of the leaderboard the measures disagree on the order.
 
 ## The measures
 
@@ -11,9 +11,11 @@ Translate Bench reports several quality measures side by side and does not combi
 | **Judge vs DeepL API** | A language model sees the source and two translations, blind, and picks the better one or calls a tie. | Share of non-tied items won against DeepL API |
 | **Error-free** | The same language model counts mistranslations, omissions and wrong names or numbers in one translation, ignoring style. | Share of items with no error |
 | **chrF++** | Character and word n-gram overlap with the reference. | 0–100, higher is better |
+| **Hard cases** | Items of the Last Translation Benchmark whose handwritten rules the translation meets, as checked by a language model. | Share of 208 items passed |
+| **Overall** | The mean of COMET-22 × 100, error-free and hard cases, for systems with every pillar on at least 12 of the 18 directions (below 18, means over the directions covered). | 0–100, higher is better |
 | **Completion** | Items that came back with a translation, of those attempted. | Share of items |
 
-The two judge measures use a fixed sample of 288 items. The others use every item.
+The two judge measures use a fixed sample of 288 items and the hard cases 208 items. The others use every item.
 
 ## Why they disagree
 
@@ -27,19 +29,22 @@ On the passages, MetricX-24 scores 6 systems better than every GPT, Claude and G
 
 **The judge reads the translations without a reference.** It can credit a correct rendering that the reference phrased differently. It also catches omissions and wrong names that a reference-based score can average away.
 
+**The hard cases are chosen to break translation systems.** Each is a human-written example with handwritten rules, such as a word the translation must or must not use, and a translation passes only if it meets every rule. A system can score well on the news sentences and passages and still fail most of them.
+
 ## How closely the orders agree
 
 Spearman rank correlation between the measures, over the systems with both text types in all 18 directions:
 
 <!-- tb:correlations -->
-| | COMET-22 | MetricX-24 | MetricX-24 QE | chrF++ | Judge vs DeepL API | Error-free |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| COMET-22 | 1.00 | 0.81 | 0.37 | 0.82 | 0.90 | 0.92 |
-| MetricX-24 | 0.81 | 1.00 | 0.76 | 0.54 | 0.67 | 0.66 |
-| MetricX-24 QE | 0.37 | 0.76 | 1.00 | 0.09 | 0.15 | 0.16 |
-| chrF++ | 0.82 | 0.54 | 0.09 | 1.00 | 0.82 | 0.88 |
-| Judge vs DeepL API | 0.90 | 0.67 | 0.15 | 0.82 | 1.00 | 0.97 |
-| Error-free | 0.92 | 0.66 | 0.16 | 0.88 | 0.97 | 1.00 |
+| | COMET-22 | MetricX-24 | MetricX-24 QE | chrF++ | Judge vs DeepL API | Error-free | Hard cases |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| COMET-22 | 1.00 | 0.81 | 0.37 | 0.82 | 0.90 | 0.92 | 0.83 |
+| MetricX-24 | 0.81 | 1.00 | 0.76 | 0.54 | 0.67 | 0.66 | 0.53 |
+| MetricX-24 QE | 0.37 | 0.76 | 1.00 | 0.09 | 0.15 | 0.16 | 0.06 |
+| chrF++ | 0.82 | 0.54 | 0.09 | 1.00 | 0.82 | 0.88 | 0.80 |
+| Judge vs DeepL API | 0.90 | 0.67 | 0.15 | 0.82 | 1.00 | 0.97 | 0.92 |
+| Error-free | 0.92 | 0.66 | 0.16 | 0.88 | 0.97 | 1.00 | 0.91 |
+| Hard cases | 0.83 | 0.53 | 0.06 | 0.80 | 0.92 | 0.91 | 1.00 |
 
 31 systems (19 local, 12 cloud). The judge column leaves out DeepL API itself (30 systems). 1.00 means the same order.
 <!-- /tb:correlations -->
@@ -47,3 +52,5 @@ Spearman rank correlation between the measures, over the systems with both text 
 ## Reading a paired interval
 
 Two systems are compared by the paired 95% interval of their difference, computed on the items both translated. When the interval includes zero, the two systems are tied, and this test set does not resolve their order. Many of the leading systems are within a few thousandths of COMET-22 of each other and tied.
+
+The Overall score has no interval. Its hard-cases pillar rests on 208 items, so a pass rate near 50% has a 95% interval about 13 points wide, and a third of that carries into the Overall score. Two systems a point or two apart on it are not separated.

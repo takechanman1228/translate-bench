@@ -11,6 +11,7 @@ This repository distributes the author's scores, identifiers (line numbers, docu
 | [WMT13](https://www.statmt.org/wmt13/translation-task.html) | WMT test material for research purposes. Bojar et al. (2013), [W13-2202](https://aclanthology.org/W13-2202/) |
 | [WMT23](https://github.com/wmt-conference/wmt23-news-systems) | WMT test material for research purposes. Kocmi et al. (2023), [2023.wmt-1.1](https://aclanthology.org/2023.wmt-1.1/) |
 | [WMT24++](https://huggingface.co/datasets/google/wmt24pp) | Apache-2.0 dataset card; the underlying WMT texts have their own provenance. [WMT24 overview](https://aclanthology.org/2024.wmt-1.1/), [WMT24++](https://aclanthology.org/2025.findings-acl.634/) |
+| [Last Translation Benchmark](https://github.com/zouharvi/last-translation-benchmark) (hard cases, [results/ltb-v1](results/ltb-v1/protocol.md)) | Vilém Zouhar and the LTB contributors. Zouhar et al. (2026), [arXiv:2609.04173](https://arxiv.org/abs/2609.04173). Data [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), code MIT |
 
 `translate-bench prepare` downloads these files from their publishers. Keep the texts it writes out of public repositories, issues and pull requests.
 
